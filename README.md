@@ -1,5 +1,7 @@
 # Gutly
 
+**Live app:** https://aisehi-seven.vercel.app (phones open the mobile app automatically; `/mobile` for the prototype on desktop)
+
 A calm, non-diagnostic gut-health companion for young adults in India. Log meals with a photo, check in on how your gut feels, and see gentle patterns with honest confidence bands. Gutly never diagnoses, never ranks foods as good or bad, and points to a doctor when something sounds serious.
 
 This repository holds:
