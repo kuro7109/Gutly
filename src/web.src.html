@@ -77,6 +77,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .side-log{margin:14px 0 4px}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-xs);color:var(--muted)}
 .side-foot .row-btns{display:flex;gap:6px}
+.brand .home-link{border:0;background:none;color:inherit;cursor:pointer;padding:0 6px;margin-left:-6px;min-height:44px;border-radius:10px;position:relative;overflow:hidden}
+.me-btn{min-height:56px;padding:0 8px;color:var(--ink);font-size:var(--fs-sm)}
+.me-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--surface-2);color:var(--ink);font-weight:600}
+.me-btn .lbl{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.me-name{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.me-sub{font-size:var(--fs-xs);color:var(--muted);font-weight:400}
+.me-btn[aria-current="page"] .me-av{background:var(--surface);box-shadow:0 0 0 1.5px var(--line)}
+@media (min-width:900px){ .bar-only{display:none!important} }
 .app.mini .lbl,.app.mini .brand .wm,.app.mini .side-foot .hint{display:none}
 .app.mini .brand{justify-content:center;padding:0}
 .app.mini .nav-item{justify-content:center;padding:0}
@@ -420,16 +428,17 @@ textarea.input{min-height:84px;resize:vertical}
 <!-- APP -->
 <div class="app" id="app" hidden>
   <aside class="side" id="side" aria-label="Main">
-    <div class="brand"><span class="wm">Gutly</span><button class="icon-btn rp" id="side-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar"><svg class="ic sm"><use href="#i-panel"/></svg></button></div>
+    <div class="brand"><button class="wm home-link rp" data-view="today" aria-label="Gutly home, go to Today">Gutly</button><button class="icon-btn rp" id="side-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar"><svg class="ic sm"><use href="#i-panel"/></svg></button></div>
     <nav class="nav" id="nav">
       <button class="nav-item rp" data-view="today" aria-label="Today"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">Today</span></button>
       <button class="nav-item rp" data-view="insights" aria-label="Insights"><svg class="ic"><use href="#i-bulb"/></svg><span class="lbl">Insights</span></button>
       <button class="nav-item rp" data-view="meals" aria-label="Meals"><svg class="ic"><use href="#i-bowl"/></svg><span class="lbl">Meals</span></button>
       <button class="nav-item rp" data-view="guti" aria-label="Chat"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">Chat</span></button>
-      <button class="nav-item rp" data-view="profile" aria-label="Profile"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">Profile</span></button>
+      <button class="nav-item rp bar-only" data-view="profile" aria-label="Profile"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">Profile</span></button>
     </nav>
     <div class="side-log"><button class="btn btn-secondary block rp" data-open="log" aria-label="Log a meal"><svg class="ic sm"><use href="#i-plus"/></svg><span class="lbl">Log meal</span></button></div>
     <div class="side-foot">
+      <button class="nav-item rp me-btn" data-view="profile" aria-label="Profile" title="Profile"><span class="me-av" id="me-av">A</span><span class="lbl"><span id="me-name" class="me-name">Arjun</span><span class="me-sub">Profile and settings</span></span></button>
       <div class="row-btns">
         <button class="icon-btn rp" id="theme-quick" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="ic sm"><use href="#i-moon"/></svg></button>
       </div>
@@ -632,6 +641,7 @@ function go(v, opts={}){
   view = v;
   $$('[data-page]').forEach(p => { const on = p.id === v; p.hidden = !on; p.classList.remove('enter'); if(on){ void p.offsetWidth; p.classList.add('enter'); } });
   $$('.nav-item').forEach(n => n.dataset.view === v ? n.setAttribute('aria-current','page') : n.removeAttribute('aria-current'));
+  const nm = (S.fullName || S.name || 'Guest').trim() || 'Guest'; $('#me-name').textContent = S.guest ? 'Guest' : nm; $('#me-av').textContent = (S.guest ? 'G' : nm[0] || 'G').toUpperCase();
   if(v === 'today') renderToday();
   if(v === 'insights'){ expand = opts.expand || null; renderInsights(); }
   if(v === 'meals') renderMeals();
