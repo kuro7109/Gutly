@@ -20,6 +20,10 @@ Both apps are single HTML files with no build step. Data stays in the browser (l
 
 Vercel serves the two apps and runs the `api/` functions, so the chat and photo naming use real AI.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkuro7109%2Fgutly&project-name=gutly&repository-name=gutly&env=ANTHROPIC_API_KEY&envDescription=Anthropic%20API%20key%20for%20the%20Gutly%20chat%20and%20photo%20naming%20(stays%20on%20the%20server)&envLink=https%3A%2F%2Fconsole.anthropic.com%2Fsettings%2Fkeys)
+
+The button asks for `ANTHROPIC_API_KEY` and creates a copy of this repo in your account. To deploy this repo itself instead:
+
 1. Go to [vercel.com/new](https://vercel.com/new), pick **Import Git Repository**, and choose `kuro7109/Gutly`.
 2. Leave **Framework Preset** as *Other*. No build command or output directory is needed.
 3. Under **Environment Variables**, add `ANTHROPIC_API_KEY` with your key from [console.anthropic.com](https://console.anthropic.com/). Optional: `ANTHROPIC_MODEL` (default `claude-haiku-5-5`).
