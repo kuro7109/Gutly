@@ -31,6 +31,35 @@
           "value": "SAMEORIGIN"
         }
       ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|Opera Mini|IEMobile).*"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "web"
+        }
+      ],
+      "destination": "/mobile",
+      "permanent": false
     }
   ]
 }

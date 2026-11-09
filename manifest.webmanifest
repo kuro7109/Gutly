@@ -1,0 +1,26 @@
+{
+  "name": "Gutly",
+  "short_name": "Gutly",
+  "description": "A calm gut-health companion: log meals, check in, see gentle patterns.",
+  "id": "/mobile",
+  "start_url": "/mobile",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F4F7",
+  "theme_color": "#F28C38",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

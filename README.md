@@ -36,6 +36,10 @@ URLs once deployed:
 - `https://<your-project>.vercel.app/` – web app
 - `https://<your-project>.vercel.app/mobile` – mobile prototype
 
+Phones (iPhone, Android phones) that open the main URL are sent to `/mobile` automatically; tablets and computers get the web app. Add `?web=1` to the URL to open the web app on a phone.
+
+On a phone, the mobile app fills the screen and can be installed: Safari → Share → Add to Home Screen, or Chrome → ⋮ → Add to Home screen / Install app. It then opens full-screen from a Guti icon.
+
 The status pill in each app shows **AI** when the functions answer, and **Offline · scripted replies** when no key is set. The apps work fully offline either way.
 
 ### Keeping the key safe
