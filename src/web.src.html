@@ -1,0 +1,1203 @@
+<title>Gutly Web App</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: collapsible left sidebar + 1120px content column on laptops; sidebar becomes a bottom bar under 900px. Same 70-30-10 tokens as the phone app. */
+:root{
+  --bg:#F5F4F7; --surface:#FFFFFF; --surface-2:#ECE9F2; --line:#D9D4E3;
+  --ink:#2A2337; --muted:#655E73;
+  --accent:#F28C38; --accent-deep:#A9520C; --accent-press:#C46A1F; --accent-tint:#FDEBDC; --on-accent:#2A2337;
+  --success:#23744F; --warn:#8A5A00; --danger:#B3261E; --info:#2F5DA8;
+  --scrim:rgba(20,16,28,.45);
+  --font-display:'Baloo 2', 'Figtree', ui-rounded, system-ui, sans-serif;
+  --font-ui:'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --fs-title:clamp(1.7rem, 1.2rem + 1.4vw, 2.5rem); --fs-h2:1.3rem; --fs-body:1rem; --fs-sm:.875rem; --fs-xs:.78rem;
+  --r-sm:12px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+  --t-fast:150ms; --t-med:220ms; --t-slow:400ms;
+  --ease:cubic-bezier(.2,.7,.2,1); --glide:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --shadow-1:0 1px 2px rgba(42,35,55,.06), 0 6px 18px rgba(42,35,55,.07);
+  --side-w:248px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15121C; --surface:#1E1A28; --surface-2:#2A2536; --line:#3A3347;
+  --ink:#F1EEF6; --muted:#B0A9BE;
+  --accent:#F59A4E; --accent-deep:#F8B57C; --accent-press:#B8611C; --accent-tint:#3A2A1E; --on-accent:#1C1726;
+  --success:#5CC48F; --warn:#E3B04B; --danger:#FF8A80; --info:#8DB4FF;
+  --scrim:rgba(0,0,0,.6);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#15121C; --surface:#1E1A28; --surface-2:#2A2536; --line:#3A3347;
+  --ink:#F1EEF6; --muted:#B0A9BE;
+  --accent:#F59A4E; --accent-deep:#F8B57C; --accent-press:#B8611C; --accent-tint:#3A2A1E; --on-accent:#1C1726;
+  --success:#5CC48F; --warn:#E3B04B; --danger:#FF8A80; --info:#8DB4FF;
+  --scrim:rgba(0,0,0,.6);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:var(--fs-body);line-height:1.5;-webkit-font-smoothing:antialiased}
+body.modal-open{overflow:hidden}
+body.modal-open .page .mascot{visibility:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2.5px solid var(--accent-deep);outline-offset:2px}
+img{max-width:100%}
+kbd{font-family:var(--font-ui);font-size:var(--fs-xs);font-weight:600;border:1.5px solid currentColor;border-radius:6px;padding:0 5px;opacity:.7;line-height:1.4}
+
+/* ---------- press feedback ---------- */
+.rp{position:relative;overflow:hidden;isolation:isolate}
+.ripple{position:absolute;border-radius:50%;background:currentColor;opacity:.18;transform:scale(0);pointer-events:none;animation:ripple 550ms var(--ease) forwards;z-index:-1}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+.pop,.idle.pop{animation:pop 420ms var(--spring)}
+@keyframes pop{0%{transform:scale(.86)}100%{transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.stagger>*{animation:rise var(--t-slow) var(--ease) both;animation-delay:calc(var(--i,0) * 35ms)}
+.idle{animation:breathe 3.2s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-3px) scale(1.02,.98)}}
+.mascot{display:block;height:auto;user-select:none;-webkit-user-drag:none}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);min-height:100dvh;transition:grid-template-columns var(--t-med) var(--ease)}
+.app.mini{--side-w:76px}
+.side{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:6px;padding:18px 14px;background:var(--surface);border-right:1px solid var(--line);overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 4px 0 10px;margin-bottom:10px}
+.brand .wm{font-family:var(--font-display);font-weight:700;font-size:1.6rem;line-height:1}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 13px;border-radius:12px;color:var(--muted);font-weight:600;white-space:nowrap;text-align:left;width:100%}
+.nav-item:hover{background:var(--surface-2);color:var(--ink)}
+.nav-item[aria-current="page"]{background:var(--surface-2);color:var(--ink)}
+.side-log{margin:14px 0 4px}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-xs);color:var(--muted)}
+.side-foot .row-btns{display:flex;gap:6px}
+.app.mini .lbl,.app.mini .brand .wm,.app.mini .side-foot .hint{display:none}
+.app.mini .brand{justify-content:center;padding:0}
+.app.mini .nav-item{justify-content:center;padding:0}
+.app.mini .side-log .btn{padding:0;width:48px;margin:0 auto}
+.app.mini .side-foot .row-btns{flex-direction:column;align-items:center}
+main{min-width:0;padding-block:28px 56px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.page{max-width:1120px;margin:0 auto}
+.page.enter{animation:rise var(--t-slow) var(--ease) both}
+
+/* ---------- primitives ---------- */
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:20px;height:20px}
+.icon-btn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.eyebrow{font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.title{font-family:var(--font-display);font-weight:700;font-size:var(--fs-title);line-height:1.15;letter-spacing:-.2px;margin:6px 0 6px;text-wrap:balance}
+.h2{font-family:var(--font-display);font-weight:600;font-size:var(--fs-h2);line-height:1.15;margin:0}
+.sub{color:var(--muted);margin:0 0 24px;max-width:60ch}
+.muted{color:var(--muted)}
+.small{font-size:var(--fs-sm)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+.page-head .grow{min-width:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:var(--r-pill);font-weight:600;font-size:1rem;transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),background var(--t-fast) var(--ease);white-space:nowrap}
+.btn.block{width:100%}
+.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-press)}
+.btn-primary:hover{filter:brightness(1.03)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--accent-press)}
+.btn-primary:disabled{opacity:.45;cursor:default;transform:none;box-shadow:0 3px 0 var(--accent-press)}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn-secondary:hover{border-color:var(--muted)}
+.btn-secondary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.btn-text{color:var(--ink);min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);padding:0 4px}
+.link{display:inline-flex;align-items:center;gap:4px;min-height:40px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);padding:0 2px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{min-height:44px;padding:10px 18px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--surface);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.pill:hover{border-color:var(--muted)}
+.pill.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pill.sm{min-height:38px;padding:6px 14px;font-size:var(--fs-sm)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:var(--fs-sm);color:var(--muted);font-weight:600}
+.input{width:100%;min-height:48px;padding:12px 16px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--surface);font-size:1rem;transition:border-color var(--t-fast) var(--ease)}
+.input:focus{outline:none;border-color:var(--ink)}
+.input::placeholder{color:var(--muted);opacity:.8}
+textarea.input{min-height:84px;resize:vertical}
+.hint{font-size:var(--fs-xs);color:var(--muted);min-height:1.2em}
+.hint.err{color:var(--danger)}
+.card{background:var(--surface);border-radius:var(--r-md);padding:20px;box-shadow:var(--shadow-1)}
+.card h2{margin:0 0 12px}
+.empty{display:flex;align-items:center;gap:16px;background:var(--surface-2);border-radius:var(--r-md);padding:16px 18px}
+.empty img{width:64px;flex:none}
+.empty p{margin:0;font-size:var(--fs-sm)}
+.quiet{border:1.5px dashed var(--line);border-radius:var(--r-md);padding:14px 16px;font-size:var(--fs-sm);color:var(--muted)}
+
+/* confidence */
+.conf{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;position:relative}
+.band{display:flex;gap:3px}
+.band i{width:18px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;position:relative}
+.band i.f::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;animation:fill var(--t-slow) var(--glide) forwards;animation-delay:calc(var(--n) * 90ms + 120ms)}
+@keyframes fill{to{transform:scaleX(1)}}
+.tip-btn{display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px -2px;border-radius:50%;color:var(--muted)}
+.tip-btn span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;font-size:11px;font-weight:600;line-height:1;text-transform:none}
+.tip{position:absolute;z-index:30;left:0;top:calc(100% + 8px);width:280px;max-width:calc(100vw - 48px);background:var(--ink);color:var(--bg);border-radius:var(--r-sm);padding:12px 14px;font-size:var(--fs-sm);text-transform:none;letter-spacing:0;font-weight:400;line-height:1.45;animation:rise var(--t-med) var(--ease)}
+.tip p{margin:0}.tip p+p{margin-top:6px}.tip b{font-weight:600}
+
+/* ---------- onboarding ---------- */
+.ob{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.ob-brand{position:relative;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;padding-block:48px;padding-left:max(48px,env(safe-area-inset-left,0px));padding-right:48px}
+.ob-brand::before,.ob-brand::after{content:"";position:absolute;border-radius:50%;background:var(--accent-tint);z-index:0}
+.ob-brand::before{width:520px;height:520px;right:-180px;top:-160px}
+.ob-brand::after{width:300px;height:300px;left:-120px;bottom:-120px;opacity:.7}
+.ob-brand-in{position:relative;z-index:1;width:min(540px,100%);display:flex;flex-direction:column;gap:26px}
+.ob-hero-row{display:flex;align-items:center;gap:20px}
+.ob-head{font-family:var(--font-display);font-weight:700;font-size:clamp(2rem,1.2rem + 2vw,3.1rem);line-height:1.08;margin:0;flex:1;min-width:0;text-wrap:balance}
+.ob-hero{width:clamp(130px,12vw,190px);flex:none}
+.ob-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ob-feats li{display:flex;gap:14px;align-items:flex-start}
+.fi{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--surface);color:var(--ink);flex:none;box-shadow:var(--shadow-1)}
+.ft{display:flex;flex-direction:column;min-width:0}
+.ft b{font-weight:600}
+.ft span{font-size:var(--fs-sm);color:var(--muted)}
+.ob-preview{background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-1);padding:16px 18px;max-width:440px}
+.ob-preview .obs{font-weight:600;margin:8px 0 4px;line-height:1.45}
+.ob-preview .re{font-size:var(--fs-sm);color:var(--muted);margin:0}
+.ob-main{display:flex;align-items:center;justify-content:center;padding-block:40px;padding-left:48px;padding-right:max(48px,env(safe-area-inset-right,0px))}
+.ob-card{width:min(460px,100%)}
+.only-narrow{display:none!important}
+@media (max-width:999px){
+  .ob{grid-template-columns:minmax(0,1fr)}
+  .ob-brand{display:none}
+  .ob-main{padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .ob-card{width:min(560px,100%);background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-1);padding:24px}
+  .only-narrow{display:revert!important}
+  .only-wide{display:none!important}
+}
+.ob-top{display:flex;justify-content:space-between;align-items:center;min-height:48px}
+.wordmark{font-family:var(--font-display);font-weight:700;font-size:1.5rem}
+.progress{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin:8px 0 4px}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:3px;transform-origin:left;transform:scaleX(0);transition:transform var(--t-slow) var(--glide)}
+.step-of{font-size:var(--fs-xs);color:var(--muted);margin:0 0 12px}
+.wel{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 0 8px}
+.wel .wordmark{font-size:2.8rem;line-height:1}
+.wel-tag{color:var(--muted);max-width:30ch;margin:4px 0 22px;font-size:1.06rem}
+.pw{position:relative}
+.pw .input{padding-right:76px}
+.pw-toggle{position:absolute;right:6px;top:6px;min-height:36px;padding:0 12px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm)}
+.form-err{font-size:var(--fs-sm);color:var(--danger);min-height:1.3em;margin:0}
+.or-row{font-size:var(--fs-sm);margin:0}
+.multi-note{font-size:var(--fs-sm);color:var(--muted);margin:-2px 0 14px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pill.custom{display:inline-flex;align-items:center;gap:6px}
+.pill.custom .ic{width:16px;height:16px}
+.own{display:flex;gap:8px;margin-top:12px}
+.own .input{flex:1;min-width:0;min-height:44px}
+.own .btn{width:auto;flex:none;min-height:44px;padding:0 18px}
+.q-block+.q-block{margin-top:22px}
+.q-block h3{margin:0 0 10px;font-size:1rem}
+.edit-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+.back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 12px 0 4px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm)}
+
+/* ---------- today ---------- */
+.hello{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px}
+.hello .grow{min-width:0}
+.grid-2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;align-items:start}
+.timeline{display:flex;flex-direction:column}
+.tl-row{display:flex;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm)}
+.tl-row:last-child{border-bottom:none}
+.tl-row time{color:var(--muted);width:72px;flex:none;font-variant-numeric:tabular-nums}
+.thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;background:var(--surface-2);display:grid;place-items:center;color:var(--muted)}
+.tl-row span{min-width:0}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.ins-card .obs{font-size:1.1rem;font-weight:600;line-height:1.5;margin:10px 0 6px}
+.ins-card .re{font-size:var(--fs-sm);color:var(--muted);margin:0 0 4px}
+.idea-row{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:12px;border-radius:12px}
+.idea-row:hover{background:var(--surface-2)}
+.idea-row .grow{flex:1;min-width:0}
+.idea-row .t{display:block;font-weight:600}
+.idea-row .d{display:block;margin-top:2px;font-size:var(--fs-sm);color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--surface-2);border:2px solid var(--muted);margin-top:7px;flex:none}
+
+/* ---------- insights ---------- */
+.evidence{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border-radius:var(--r-md);padding:14px 18px;box-shadow:var(--shadow-1)}
+.stat b{display:block;font-family:var(--font-display);font-size:2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:var(--fs-sm);color:var(--muted)}
+.ins-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.ins{background:var(--surface);border-radius:var(--r-md);padding:18px 18px 10px;box-shadow:var(--shadow-1);transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
+.ins.out{opacity:0;transform:scale(.97)}
+.ins-top{display:flex;justify-content:space-between;align-items:center;margin:-8px -10px 0 0}
+.ins .obs{font-size:1.06rem;font-weight:600;line-height:1.5;margin:6px 0 4px}
+.ins .re{font-size:var(--fs-sm);color:var(--muted);margin:0 0 2px}
+.why{border-top:1px solid var(--line);margin-top:8px;padding-top:10px;animation:fade var(--t-med) var(--ease)}
+.why ul{margin:6px 0 4px;padding-left:18px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:4px}
+.legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.legend div{font-size:var(--fs-sm);color:var(--muted)}
+.legend b{display:flex;align-items:center;gap:8px;color:var(--ink);margin-bottom:4px;font-size:var(--fs-sm)}
+.skel{border-radius:var(--r-md);background:var(--surface-2);height:150px;animation:breathe-o 1.4s ease-in-out infinite}
+@keyframes breathe-o{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ---------- meals ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.meal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.meal{background:var(--surface);border-radius:var(--r-md);padding:16px 18px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow-1)}
+.meal .grow{flex:1;min-width:0}
+.meal h3{margin:0;font-size:1.06rem}
+.meal .when{font-size:var(--fs-xs);color:var(--muted);text-transform:capitalize}
+.meal p{margin:6px 0 0;font-size:var(--fs-sm)}
+.meal .icon-btn{margin:-10px -10px 0 0}
+.meal .icon-btn[aria-pressed="true"]{color:var(--ink)}
+.meal .icon-btn[aria-pressed="true"] .ic{fill:currentColor}
+.meal.low{background:transparent;box-shadow:none;border:1.5px solid var(--line)}
+.sec-label{font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:28px 0 10px}
+
+/* ---------- guti ---------- */
+.chat-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;height:calc(100dvh - 84px);max-height:900px}
+.chat{display:flex;flex-direction:column;min-height:0;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-1);overflow:hidden}
+.chat-head{flex:none;display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.chat-head img{width:48px}
+.chat-head .grow{flex:1;min-width:0}
+.chat-head .name{font-weight:600;font-size:1.1rem;line-height:1.2}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--muted);font-weight:600}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.ai i{background:var(--success)}
+.status.off i{background:var(--warn)}
+.chat-body{flex:1;min-height:0;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.chat-empty{text-align:center;display:flex;flex-direction:column;align-items:center;padding:28px 8px 0;max-width:520px;margin:0 auto}
+.chat-empty h2{font-family:var(--font-display);font-size:1.6rem;font-weight:600;margin:0 0 4px;line-height:1.15}
+.chat-empty p{margin:0 0 18px;color:var(--muted);font-size:var(--fs-sm)}
+.starters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+.starter{text-align:left;background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px 16px;min-height:56px}
+.starter:hover{border-color:var(--muted)}
+.msg{display:flex;animation:rise var(--t-med) var(--ease) both}
+.msg .bubble{max-width:min(78%,620px);padding:12px 16px;border-radius:18px;line-height:1.55;min-width:0;overflow-wrap:anywhere}
+.msg.guti .bubble{background:var(--surface-2);border-bottom-left-radius:6px}
+.msg.me{justify-content:flex-end}
+.msg.me .bubble{background:var(--ink);color:var(--bg);border-bottom-right-radius:6px}
+.bubble p{margin:0}.bubble p+p{margin-top:8px}
+.bubble .meta{font-size:var(--fs-xs);color:var(--muted);margin-top:8px}
+.bubble.safety{border:1.5px solid var(--danger);background:var(--surface)}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:breathe-o 1.2s ease-in-out infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+.qr{flex:none;display:flex;gap:8px;flex-wrap:wrap;padding:4px 22px 8px}
+.qr .pill{min-height:38px;padding:6px 16px;font-size:var(--fs-sm)}
+.composer{flex:none;display:flex;gap:10px;align-items:flex-end;padding:12px 16px 14px;border-top:1px solid var(--line)}
+.composer textarea{flex:1;min-height:48px;max-height:160px;padding:12px 16px;border-radius:24px;border:1.5px solid var(--line);background:var(--bg);resize:none;line-height:1.4;font-size:1rem}
+.composer textarea:focus{outline:none;border-color:var(--ink)}
+.send{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--on-accent);flex:none;box-shadow:0 3px 0 var(--accent-press);transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.send:active{transform:translateY(2px);box-shadow:0 1px 0 var(--accent-press)}
+.send.stop{background:var(--surface-2);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.context{display:flex;flex-direction:column;gap:14px;overflow:auto;min-height:0}
+.context .card{padding:16px 18px}
+.context h3{margin:0 0 8px;font-size:var(--fs-sm);font-weight:600}
+.context ul{margin:0;padding-left:18px;font-size:var(--fs-sm);color:var(--muted);display:flex;flex-direction:column;gap:4px}
+
+/* ---------- profile ---------- */
+.prof-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.ident{display:flex;align-items:center;gap:16px}
+.prof-av{width:64px;height:64px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:1.5rem;font-family:var(--font-display);font-weight:700;flex:none}
+.rows{display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:var(--fs-sm);padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row span:first-child{color:var(--muted);flex:none}
+.row span:last-child{text-align:right;min-width:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{background:var(--surface-2);border-radius:10px;padding:4px 10px;font-size:var(--fs-sm)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface-2);border-radius:var(--r-pill);padding:4px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm);color:var(--muted)}
+.seg button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1)}
+.log-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.log-row{display:flex;gap:12px;align-items:center;font-size:var(--fs-sm)}
+.log-row .grow{flex:1;min-width:0}
+.log-row time{color:var(--muted);font-size:var(--fs-xs);display:block}
+.privacy{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-sm);color:var(--muted)}
+
+/* ---------- dialogs ---------- */
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:24px}
+.modal .scrim{position:absolute;inset:0;background:var(--scrim);animation:fade var(--t-med) var(--ease)}
+.dialog{position:relative;width:min(780px,100%);max-height:calc(100dvh - 48px);overflow:auto;background:var(--surface);border-radius:var(--r-lg);padding:24px 28px 28px;box-shadow:0 30px 80px rgba(20,16,28,.3);animation:rise var(--t-med) var(--glide)}
+.dialog.narrow{width:min(520px,100%)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.dialog-head h2{font-family:var(--font-display);font-size:1.6rem;margin:0;line-height:1.15}
+.log-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.viewfinder{position:relative;width:100%;aspect-ratio:4/3;border-radius:var(--r-md);background:#1C1726;color:#F1EEF6;display:grid;place-items:center;overflow:hidden}
+.viewfinder.drop{background:var(--surface-2);color:var(--ink);border:2px dashed var(--line)}
+.viewfinder.drop.over{border-color:var(--accent-press);background:var(--accent-tint)}
+.viewfinder video,.viewfinder img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vf-msg{position:relative;text-align:center;padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--fs-sm);max-width:300px}
+.vf-msg strong{font-size:1rem}
+.live{position:absolute;top:12px;left:12px;z-index:1;background:rgba(0,0,0,.5);color:#fff;font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:4px 10px}
+.cam-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.cam-actions label{cursor:pointer}
+.cam-actions input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.cam-actions label:focus-within{outline:2.5px solid var(--accent-deep);outline-offset:2px}
+.ai-line{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--muted);min-height:1.4em}
+.note-chips{display:flex;flex-wrap:wrap;gap:6px}
+.saved{position:absolute;inset:0;z-index:5;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;border-radius:var(--r-lg);animation:fade var(--t-med) var(--ease)}
+.saved img{width:150px}
+.saved p{margin:0;font-family:var(--font-display);font-size:1.5rem;font-weight:600}
+.moods{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.mood{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:var(--r-md);background:var(--bg);border:2px solid var(--line);transition:border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.mood:hover{border-color:var(--muted)}
+.mood img{width:64px;height:58px;object-fit:contain}
+.mood span{font-size:var(--fs-sm);font-weight:600;text-align:center;line-height:1.2}
+.mood[aria-pressed="true"]{border-color:var(--ink);background:var(--surface-2)}
+.dialog ul{padding-left:18px;margin:8px 0 18px;display:flex;flex-direction:column;gap:6px}
+.dialog-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+
+.toast{position:fixed;right:24px;bottom:24px;z-index:80;background:var(--ink);color:var(--bg);border-radius:var(--r-sm);padding:12px 16px;font-size:var(--fs-sm);display:flex;align-items:center;gap:14px;max-width:min(420px,calc(100vw - 32px));opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast button{font-weight:600;text-decoration:underline;text-underline-offset:3px;min-height:36px;padding:0 6px;color:inherit}
+
+/* ---------- responsive ---------- */
+@media (min-width:900px) and (max-width:1199px){ .app{--side-w:76px} .app .lbl,.app .brand .wm,.app .side-foot .hint{display:none} .app .brand{justify-content:center;padding:0} .app .nav-item{justify-content:center;padding:0} .app .side-log .btn{padding:0;width:48px;margin:0 auto} #side-toggle{display:none} }
+@media (max-width:1040px){ .grid-2,.prof-grid{grid-template-columns:minmax(0,1fr)} .chat-wrap{grid-template-columns:minmax(0,1fr)} .context{display:none} .moods{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:899px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;z-index:40;flex-direction:row;padding:8px max(10px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-right,0px));border-right:0;border-top:1px solid var(--line)}
+  .brand,.side-log,.side-foot{display:none}
+  .nav{flex-direction:row;justify-content:space-between;width:100%;gap:4px}
+  .nav-item{width:auto;justify-content:center;padding:0 12px;border-radius:var(--r-pill);min-width:48px}
+  .nav-item .lbl{display:none}
+  .nav-item[aria-current="page"] .lbl{display:inline}
+  main{padding-block:16px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .ins-grid,.evidence,.legend,.log-grid,.starters{grid-template-columns:minmax(0,1fr)}
+  .evidence{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat{padding:12px}.stat b{font-size:1.5rem}
+  .chat-wrap{height:calc(100dvh - 120px)}
+  .modal{padding:0;place-items:end stretch}
+  .dialog{width:100%;max-height:92dvh;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:18px 18px 24px}
+  .toast{left:16px;right:16px;bottom:88px;max-width:none}
+  .hello img{width:72px}
+  .ob-card{padding:20px}
+  .page-head{flex-direction:column;align-items:flex-start;gap:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:1ms!important}
+  .band i.f::after{transform:none}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0zM9 8c0-1.3 1-1.7 1-3M13.5 8c0-1.3 1-1.7 1-3"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-6.5L8 20.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.6L7 20z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 16l5-4.5 4 3.5 3-2.5 5 4"/><circle cx="15.5" cy="9.5" r="1.5"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 4h9l4 4v12H6z"/><path d="M9 12h7M9 16h5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+  <symbol id="i-mood" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9 14.5c1.6 1.6 4.4 1.6 6 0"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-system" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<!-- ONBOARDING -->
+<div class="ob" id="ob" hidden>
+  <aside class="ob-brand" aria-label="About Gutly">
+    <div class="ob-brand-in">
+      <span class="wordmark">Gutly</span>
+      <div class="ob-hero-row"><p class="ob-head">Understand your gut, one meal at a time.</p><img class="mascot idle ob-hero" id="ob-hero" alt=""></div>
+      <ul class="ob-feats"><li><span class="fi"><svg class="ic sm"><use href="#i-camera"/></svg></span><span class="ft"><b>Snap or jot a meal</b><span>A photo before you eat or a note after. No calories, no scores.</span></span></li><li><span class="fi"><svg class="ic sm"><use href="#i-bulb"/></svg></span><span class="ft"><b>One insight a day</b><span>Patterns from your own plates, with the reason each one showed up.</span></span></li><li><span class="fi"><svg class="ic sm"><use href="#i-chat"/></svg></span><span class="ft"><b>Chat with Gutly</b><span>Ask about any pattern. Gutly never diagnoses or bans foods.</span></span></li></ul>
+      <div class="ob-preview"><span class="eyebrow">Example insight</span><div style="margin-top:8px"><span class="conf"><span class="band" aria-hidden="true"><i class="f" style="--n:1"></i><i></i><i></i></span>Early signal</span></div><p class="obs">Rajma lunches might be linked to heavier afternoons.</p><p class="re">Both of those days were also rushed, so it may be pace as much as food.</p></div>
+    </div>
+  </aside>
+  <div class="ob-main"><div class="ob-card" id="ob-card"></div></div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" hidden>
+  <aside class="side" id="side" aria-label="Main">
+    <div class="brand"><span class="wm">Gutly</span><button class="icon-btn rp" id="side-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar"><svg class="ic sm"><use href="#i-panel"/></svg></button></div>
+    <nav class="nav" id="nav">
+      <button class="nav-item rp" data-view="today" aria-label="Today"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">Today</span></button>
+      <button class="nav-item rp" data-view="insights" aria-label="Insights"><svg class="ic"><use href="#i-bulb"/></svg><span class="lbl">Insights</span></button>
+      <button class="nav-item rp" data-view="meals" aria-label="Meals"><svg class="ic"><use href="#i-bowl"/></svg><span class="lbl">Meals</span></button>
+      <button class="nav-item rp" data-view="guti" aria-label="Chat"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">Chat</span></button>
+      <button class="nav-item rp" data-view="profile" aria-label="Profile"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">Profile</span></button>
+    </nav>
+    <div class="side-log"><button class="btn btn-secondary block rp" data-open="log" aria-label="Log a meal"><svg class="ic sm"><use href="#i-plus"/></svg><span class="lbl">Log meal</span></button></div>
+    <div class="side-foot">
+      <div class="row-btns">
+        <button class="icon-btn rp" id="theme-quick" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="ic sm"><use href="#i-moon"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- TODAY -->
+    <section class="page" id="today" data-page hidden aria-label="Today">
+      <div class="hello">
+        <div class="grow"><span class="eyebrow" id="today-date"></span><h1 class="title" id="today-title">How's your gut today?</h1></div>
+        <img class="mascot idle" id="today-mascot" width="112" alt="">
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h2 class="h2">Today so far</h2><span class="small muted" id="today-count"></span></div>
+          <div id="today-list" style="margin-top:12px"></div>
+          <div class="actions">
+            <button class="btn btn-primary rp" data-open="log"><svg class="ic sm"><use href="#i-camera"/></svg>Log meal <kbd>L</kbd></button>
+            <button class="btn btn-secondary rp" data-open="checkin" id="checkin-btn">Check in <kbd>K</kbd></button>
+          </div>
+        </div>
+        <div class="stack" style="gap:20px">
+          <div id="today-insight"></div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="h2">Felt easier before</h2><button class="link rp" data-view="meals">See all</button></div>
+            <div id="today-ideas" class="stagger" style="margin:8px -12px -8px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section class="page" id="insights" data-page hidden aria-label="Insights">
+      <div class="page-head"><div class="grow"><h1 class="title">What we're noticing</h1><p class="sub" style="margin:0">Each one says why it showed up.</p></div></div>
+      <div class="evidence">
+        <div class="stat"><b id="ev-m">0</b><span>meals logged</span></div>
+        <div class="stat"><b id="ev-c">0</b><span>check-ins</span></div>
+        <div class="stat"><b id="ev-d">0</b><span>days of patterns</span></div>
+      </div>
+      <div id="ins-list"></div>
+      <div class="card legend" aria-label="How sure Gutly is">
+        <div><b><span class="band" aria-hidden="true"><i class="f" style="--n:1"></i><i></i><i></i></span>Early signal</b>Seen 2–3 times. Could easily be chance.</div>
+        <div><b><span class="band" aria-hidden="true"><i class="f" style="--n:1"></i><i class="f" style="--n:2"></i><i></i></span>Emerging pattern</b>Seen several times over a week.</div>
+        <div><b><span class="band" aria-hidden="true"><i class="f" style="--n:1"></i><i class="f" style="--n:2"></i><i class="f" style="--n:3"></i></span>Consistent observation</b>Has held for two weeks or more. It's how sure Gutly is, not a score.</div>
+      </div>
+    </section>
+
+    <!-- MEALS -->
+    <section class="page" id="meals" data-page hidden aria-label="Meal ideas">
+      <div class="page-head"><div class="grow"><h1 class="title">Meals that felt easier</h1><p class="sub" style="margin:0">Drawn from what's felt easy for you.</p></div></div>
+      <div class="filters" id="meal-filters" role="group" aria-label="Filter by meal time"></div>
+      <div class="meal-grid" id="meal-list"></div>
+      <p class="sec-label">Less sure about these</p>
+      <div class="meal-grid" id="meal-low"></div>
+    </section>
+
+    <!-- GUTI -->
+    <section class="page" id="guti" data-page hidden aria-label="Chat with Gutly">
+      <div class="chat-wrap">
+        <div class="chat">
+          <div class="chat-head">
+            <img class="mascot idle" id="chat-mascot" alt="">
+            <div class="grow"><div class="name">Gutly</div><span class="status" id="ai-status"><i></i><span>Checking…</span></span></div>
+            <button class="btn-text rp" id="chat-clear">New chat</button>
+          </div>
+          <div class="chat-body" id="chat-body" aria-live="polite"></div>
+          <div class="qr" id="qr" hidden></div>
+          <form class="composer" id="composer">
+            <label for="chat-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message Gutly</label>
+            <textarea id="chat-input" rows="1" placeholder="Tell Gutly what's going on… (Enter to send, Shift+Enter for a new line)"></textarea>
+            <button class="send rp" id="send" type="submit" aria-label="Send"><svg class="ic sm"><use href="#i-send"/></svg></button>
+          </form>
+        </div>
+        <aside class="context" aria-label="What Gutly can see">
+          <div class="card"><h3>What Gutly can see</h3><ul id="ctx-today"></ul></div>
+          <div class="card"><h3>Patterns this week</h3><ul><li>Chai with poha mornings seemed calmer</li><li>Rajma lunches went with heavier afternoons, on rushed days</li><li>Dal with phulka seemed easier than paneer with roti</li></ul></div>
+          <div class="card"><h3>Gutly never</h3><ul><li>Diagnoses or names a condition</li><li>Ranks foods good or bad</li><li>Suggests medicines or supplements</li></ul><p class="small muted" style="margin:10px 0 0">Red-flag symptoms are screened on this device before anything reaches the AI.</p></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="page" id="profile" data-page hidden aria-label="Profile">
+      <div class="page-head"><div class="grow"><h1 class="title">Profile</h1></div></div>
+      <div class="prof-grid">
+        <div class="stack" style="gap:20px">
+          <div class="card"><div class="ident"><div class="prof-av" id="prof-av">A</div><div><div style="font-size:var(--fs-h2);font-weight:600" id="prof-name"></div><div class="small muted" id="prof-meta"></div></div></div></div>
+          <div class="card"><div class="edit-head"><h2 class="h2">What you told us</h2><button class="btn-text rp" id="edit-answers">Edit</button></div><div class="rows" id="prof-answers"></div></div>
+          <div class="card"><h2 class="h2">Food preferences</h2><div class="small muted">Keeps meal ideas familiar</div><div class="tags"><span class="tag">Vegetarian</span><span class="tag">North Indian home food</span><span class="tag">Low spice</span></div></div>
+        </div>
+        <div class="stack" style="gap:20px">
+          <div class="card"><h2 class="h2">Appearance</h2><div class="seg" role="radiogroup" aria-label="Appearance" id="theme-seg" style="margin-top:12px">
+            <button class="rp" role="radio" data-theme-opt="system" aria-checked="true"><svg class="ic sm"><use href="#i-system"/></svg>System</button>
+            <button class="rp" role="radio" data-theme-opt="light" aria-checked="false"><svg class="ic sm"><use href="#i-sun"/></svg>Light</button>
+            <button class="rp" role="radio" data-theme-opt="dark" aria-checked="false"><svg class="ic sm"><use href="#i-moon"/></svg>Dark</button></div></div>
+          <div class="card"><h2 class="h2">Your log</h2><div class="log-list" id="prof-log" style="margin-top:12px"></div></div>
+          <div class="card"><h2 class="h2">Gutly Plus</h2><p class="small muted">Longer memory, a weekly reflection and a report to share with your doctor. Everything you use today stays free.</p><button class="btn btn-secondary rp" id="plus-btn">See what's in Plus</button></div>
+          <div class="privacy"><svg class="ic sm"><use href="#i-lock"/></svg><span>Meal photos are processed only to find your patterns. Never shared, never used for ads, never sold.</span></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn-text rp" id="signout">Sign out</button><button class="btn-text rp" id="reset">Reset demo</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="layer"></div>
+<div class="toast" id="toast" role="status"><span id="toast-msg"></span><button id="toast-act" hidden></button></div>
+<input type="file" id="cam-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0">
+
+<script>
+(function(){
+'use strict';
+const MASCOT = /*MASCOTS*/{};
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = d => new Date(d).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).replace(' ', ' ');
+const dayKey = d => new Date(d).toDateString();
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = () => matchMedia('(pointer: coarse)').matches;
+
+/* ===== press feedback ===== */
+const buzz = ms => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(_){} };
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest('button,.rp,label.btn');
+  if(!el || el.disabled) return;
+  buzz(el.matches('.btn-primary,.send,.mood') ? 8 : 4);
+  if(reduced() || !el.classList.contains('rp')) return;
+  const r = el.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+  const s = document.createElement('span'); s.className = 'ripple';
+  s.style.width = s.style.height = size + 'px';
+  s.style.left = (e.clientX - r.left - size/2) + 'px'; s.style.top = (e.clientY - r.top - size/2) + 'px';
+  el.append(s); s.addEventListener('animationend', () => s.remove());
+}, {passive:true});
+function celebrate(el){ buzz(16); if(!el) return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+function countUp(el, to){
+  if(reduced()){ el.textContent = to; return; }
+  const t0 = performance.now(), dur = 700;
+  const step = t => { const p = Math.min(1, (t - t0)/dur); el.textContent = Math.round(to * (1 - Math.pow(1-p, 3))); if(p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ===== content ===== */
+const QS = [
+  {q:'What usually brings you here?', opts:['Bloating after meals','Gas and discomfort','IBS-like symptoms','Not sure what to eat','Understanding patterns','Wanting to trust my gut']},
+  {q:'When does your gut feel off?', opts:['Right after eating','A few hours later','With certain foods',"When I'm stressed",'It feels random',"I'm not sure"]},
+  {q:'What do you want help with most?', opts:['Understanding what affects me','Eating with confidence','Less guessing and restricting','Gentle meal ideas','Seeing patterns','Someone to talk it through with']},
+  {q:'How would you like support?', opts:['A daily insight','Meal ideas','Someone to talk to','Just the patterns','A bit of everything']},
+];
+const LEVELS = {1:'Early signal',2:'Emerging pattern',3:'Consistent observation'};
+const INSIGHTS = [
+  {id:'chai', level:2, obs:'Mornings with chai and poha seemed calmer this week.', re:"Patterns can shift — that's normal.", why:['You logged chai with poha on 4 mornings.','On 3 of them, your check-in within two hours was "calm" or "settled".','The fourth followed a late night, which may explain the difference.'], ask:'Why did the chai and poha pattern show up?'},
+  {id:'rajma', level:1, obs:'Rajma lunches might be linked to heavier afternoons.', re:'Still early. It may be about pace as much as food.', why:['Rajma-chawal was lunch on Tuesday and Thursday.','Both afternoons you checked in as "bloated" around 4 pm.','Both days you also noted feeling rushed, so this is not being read as a food effect yet.'], ask:'Why did the rajma insight show up?'},
+  {id:'roti', level:2, obs:'Rotis with dal seemed easier than rotis with paneer this week.', re:"Two paneer meals isn't much to go on. This could change.", why:['Dal with phulka: 3 dinners, each followed by a "settled" morning.','Paneer with roti: 2 dinners, one followed by a "heavy" morning.'], ask:'Tell me about dal and paneer'},
+  {id:'warm', level:3, obs:'Warm, simple dinners have felt easy for three weeks.', re:"This one has held steady. It can still change, and that's fine.", why:['Khichdi, dal-rice and curd rice: 9 dinners over three weeks.','8 of those were followed by a "settled" or "light" morning check-in.'], ask:'What do you see in my dinners?'},
+];
+const SEED = {meals:18, checkins:9, days:7};
+const MEALS = [
+  {id:'khichdi', name:'Moong dal khichdi', when:['dinner','lunch'], why:'Logged 4 times. Each next morning you checked in "settled".', level:3},
+  {id:'poha', name:'Poha with peanuts', when:['breakfast'], why:'Your calmer mornings often started with this.', level:2},
+  {id:'dal', name:'Dal with phulka', when:['lunch','dinner'], why:'Felt easier than roti with paneer this week.', level:2},
+  {id:'curd', name:'Curd rice', when:['lunch','dinner'], why:'Shows up on light, settled evenings.', level:2},
+  {id:'idli', name:'Idli with sambar', when:['breakfast'], why:'Logged twice, both followed by "calm".', level:1},
+];
+const MEALS_LOW = [
+  {id:'upma', name:'Vegetable upma', when:['breakfast'], why:'Only logged once so far.'},
+  {id:'jeera', name:'Jeera rice with dal tadka', when:['lunch','dinner'], why:'Mixed check-ins after this. Too early to say.'},
+];
+const MOODS = [{k:'calm',l:'Calm'},{k:'happy',l:'Good'},{k:'tired',l:'Tired'},{k:'anxious',l:'Anxious'},{k:'stressed',l:'Stressed or rushed'},{k:'sad',l:'Low'}];
+const GUTS = ['Settled','Light','Heavy','Bloated','Gassy'];
+const NOTE_CHIPS = ['Ate in a hurry','Extra spicy','Office canteen','Ordered in','Ate late'];
+const VIEWS = ['today','insights','meals','guti','profile'];
+
+/* ===== state ===== */
+const KEY = 'gutly-web-v1';
+const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, side:'open', theme:'system'});
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(_){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(_){} };
+const slot = () => { const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : 'dinner'; };
+const todays = () => S.logs.filter(x => dayKey(x.time) === dayKey(Date.now()));
+
+/* ===== toast ===== */
+let toastT;
+function toast(msg, act){
+  const t = $('#toast'), b = $('#toast-act');
+  $('#toast-msg').textContent = msg; b.hidden = !act;
+  if(act){ b.textContent = act.label; b.onclick = () => { act.fn(); t.classList.remove('show'); }; }
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), act ? 4500 : 2600);
+}
+
+/* ===== routing ===== */
+let view = '', expand = null;
+function go(v, opts={}){
+  if(!S.loggedIn){ showAuth('welcome'); return; }
+  if(!S.onboarded){ showQuestion(1); return; }
+  if(!VIEWS.includes(v)) v = 'today';
+  $('#ob').hidden = true; $('#app').hidden = false;
+  view = v;
+  $$('[data-page]').forEach(p => { const on = p.id === v; p.hidden = !on; p.classList.remove('enter'); if(on){ void p.offsetWidth; p.classList.add('enter'); } });
+  $$('.nav-item').forEach(n => n.dataset.view === v ? n.setAttribute('aria-current','page') : n.removeAttribute('aria-current'));
+  if(v === 'today') renderToday();
+  if(v === 'insights'){ expand = opts.expand || null; renderInsights(); }
+  if(v === 'meals') renderMeals();
+  if(v === 'guti') renderChat();
+  if(v === 'profile') renderProfile();
+  window.scrollTo(0, 0);
+  if(location.hash.slice(1) !== v){ try { history.replaceState(null, '', '#' + v); } catch(_){ } }
+}
+document.addEventListener('click', e => {
+  const v = e.target.closest('[data-view]'); if(v){ go(v.dataset.view); return; }
+  const o = e.target.closest('[data-open]'); if(o){ o.dataset.open === 'log' ? openLog() : openCheckin(); }
+});
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if(VIEWS.includes(h) && h !== view) go(h); });
+function setSide(state){
+  S.side = state; save();
+  const open = state === 'open', t = $('#side-toggle');
+  $('#app').classList.toggle('mini', !open);
+  t.setAttribute('aria-expanded', open); t.setAttribute('aria-label', open ? 'Collapse sidebar' : 'Expand sidebar'); t.title = t.getAttribute('aria-label');
+}
+$('#side-toggle').addEventListener('click', () => setSide(S.side === 'open' ? 'closed' : 'open'));
+
+/* ===== shortcuts ===== */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ if($('#layer').innerHTML) closeModal(); else closeTip(); return; }
+  if(e.metaKey || e.ctrlKey || e.altKey || $('#layer').innerHTML || !S.onboarded || !S.loggedIn || $('#app').hidden) return;
+  if(e.target.closest('input,textarea,[contenteditable]')) return;
+  const k = e.key.toLowerCase();
+  if(k === 'l'){ e.preventDefault(); openLog(); }
+  if(k === 'k'){ e.preventDefault(); openCheckin(); }
+});
+
+/* ===== modal ===== */
+let lastFocus = null, onClose = null;
+function openModal(html, cls='', wire, closeCb){
+  lastFocus = document.activeElement; onClose = closeCb || null;
+  $('#layer').innerHTML = `<div class="modal"><div class="scrim" data-close></div><div class="dialog ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;
+  document.body.classList.add('modal-open');
+  const d = $('#layer .dialog'); wire && wire(d);
+  const f = d.querySelector('[autofocus]') || d.querySelector('button,input,textarea'); f && f.focus();
+}
+function closeModal(){
+  if(!$('#layer').innerHTML) return;
+  onClose && onClose(); onClose = null;
+  $('#layer').innerHTML = ''; document.body.classList.remove('modal-open');
+  lastFocus && lastFocus.focus && lastFocus.focus();
+}
+$('#layer').addEventListener('click', e => { if(e.target.closest('[data-close]')) closeModal(); });
+$('#layer').addEventListener('keydown', e => {
+  if(e.key !== 'Tab') return;
+  const f = $$('#layer .dialog button:not([disabled]),#layer .dialog input,#layer .dialog textarea,#layer .dialog label.btn').filter(x => x.offsetParent !== null);
+  if(!f.length) return;
+  const first = f[0], last = f[f.length-1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+});
+
+/* ===== tooltip ===== */
+const conf = (n, tip=true) => `<span class="conf"><span class="band" aria-hidden="true">${[1,2,3].map(i => `<i class="${i <= n ? 'f' : ''}" style="--n:${i}"></i>`).join('')}</span>${LEVELS[n]}${tip ? `<button class="tip-btn" data-tip aria-expanded="false" aria-label="What does ${LEVELS[n]} mean?"><span>i</span></button>` : ''}</span>`;
+const TIP = `<div class="tip" role="tooltip"><p><b>Early signal</b>: seen 2–3 times. Could easily be chance.</p><p><b>Emerging pattern</b>: seen several times over a week.</p><p><b>Consistent observation</b>: has held for 2+ weeks.</p><p>It's how sure Gutly is, not a score for you or your food.</p></div>`;
+function closeTip(){ $$('.tip').forEach(t => t.remove()); $$('[data-tip]').forEach(b => b.setAttribute('aria-expanded','false')); }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tip]');
+  if(!b){ if(!e.target.closest('.tip')) closeTip(); return; }
+  const open = b.getAttribute('aria-expanded') === 'true'; closeTip(); if(open) return;
+  b.setAttribute('aria-expanded','true'); b.closest('.conf').insertAdjacentHTML('beforeend', TIP);
+});
+
+/* ===== onboarding: welcome, sign up, log in, questions ===== */
+const ans = n => { const v = S.answers[n]; return Array.isArray(v) ? v : v ? [v] : []; };
+/* ===== answer picker: options + write your own (onboarding and profile) ===== */
+function renderPicker(el, n, idp, onChange){
+  const q = QS[n-1];
+  const draw = () => {
+    const picked = ans(n), extra = (S.extra && S.extra[n]) || [];
+    el.innerHTML = `<div class="pills" role="group" aria-label="${esc(q.q)}">${q.opts.map(o => `<button type="button" class="pill rp${picked.includes(o) ? ' on' : ''}" aria-pressed="${picked.includes(o)}" data-opt="${esc(o)}">${esc(o)}</button>`).join('')}${extra.map(o => `<button type="button" class="pill rp on custom" data-custom="${esc(o)}" aria-label="Remove ${esc(o)}" title="Tap to remove">${esc(o)}<svg class="ic"><use href="#i-close"/></svg></button>`).join('')}</div>
+      <form class="own" novalidate><label class="sr" for="${idp}-${n}">Write your own answer</label><input class="input" id="${idp}-${n}" maxlength="40" placeholder="Write your own…" autocomplete="off"><button class="btn btn-secondary rp" type="submit">Add</button></form>`;
+  };
+  const commit = (opts, extra) => { S.extra = S.extra || {}; S.extra[n] = extra; S.answers[n] = [...opts, ...extra]; save(); onChange && onChange(S.answers[n]); };
+  const current = () => ({opts: ans(n).filter(a => q.opts.includes(a)), extra: ((S.extra && S.extra[n]) || []).slice()});
+  el.onclick = e => {
+    const o = e.target.closest('[data-opt]'), c = e.target.closest('[data-custom]');
+    if(!o && !c) return;
+    const {opts, extra} = current();
+    if(o){ const v = o.dataset.opt; const i = opts.indexOf(v); if(i < 0) opts.push(v); else opts.splice(i, 1); }
+    if(c){ const i = extra.indexOf(c.dataset.custom); if(i >= 0) extra.splice(i, 1); }
+    commit(opts, extra); draw();
+    const back = o ? el.querySelector(`[data-opt="${CSS.escape(o.dataset.opt)}"]`) : el.querySelector('input'); back && back.focus();
+  };
+  el.onsubmit = e => {
+    e.preventDefault();
+    const inp = el.querySelector('input'), v = inp.value.trim().replace(/\s+/g, ' ');
+    if(!v) return;
+    const {opts, extra} = current();
+    const match = q.opts.find(x => x.toLowerCase() === v.toLowerCase());
+    if(match){ if(!opts.includes(match)) opts.push(match); }
+    else if(!extra.some(x => x.toLowerCase() === v.toLowerCase())) extra.push(v);
+    commit(opts, extra); draw(); buzz(8);
+    const ni = el.querySelector('input'); ni && ni.focus();
+  };
+  draw();
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const setHint = (id, msg) => { const h = $(id); h.textContent = msg || ''; h.classList.toggle('err', !!msg); return !msg; };
+async function hashPw(pw){
+  try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('gutly:' + pw)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  catch(_){ let h = 7; for(const c of pw) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
+}
+function shell(){ $('#app').hidden = true; $('#ob').hidden = false; $('#ob-hero').src = MASCOT.happy; closeModal(); window.scrollTo(0, 0); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pw]');
+  if(t){ const inp = $('#' + t.dataset.pw), show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; t.textContent = show ? 'Hide' : 'Show'; t.setAttribute('aria-pressed', show); t.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); return; }
+  const a = e.target.closest('[data-auth]'); if(a) showAuth(a.dataset.auth);
+});
+function showAuth(which){
+  shell(); const card = $('#ob-card');
+  if(which === 'welcome'){
+    card.innerHTML = `<div class="wel only-narrow"><img class="mascot idle" src="${MASCOT.happy}" width="140" alt=""><div class="wordmark">Gutly</div><p class="wel-tag">Understand your gut, one meal at a time.</p></div>
+      <div class="only-wide"><h1 class="title" style="margin:0 0 8px">Welcome to Gutly</h1><p class="sub">Create an account to start, or log in to pick up where you left off.</p></div>
+      <div class="stack"><button class="btn btn-primary block rp" data-auth="signup">Create account</button><button class="btn btn-secondary block rp" data-auth="login">Log in</button><button class="btn-text rp" id="guest" style="align-self:center">Explore without an account</button></div>`;
+    $('#guest').onclick = () => { S.loggedIn = true; S.guest = true; S.name = ''; S.fullName = 'Guest'; S.email = ''; save(); S.onboarded ? go('today') : showQuestion(1); };
+    return;
+  }
+  if(which === 'signup'){
+    card.innerHTML = `<div class="ob-top"><button class="back rp" data-auth="welcome"><svg class="ic sm"><use href="#i-back"/></svg>Back</button><span class="wordmark">Gutly</span></div>
+      <div class="progress" aria-hidden="true"><i id="ob-bar"></i></div><p class="step-of">Step 1 of 5</p>
+      <h1 class="title">Create your account</h1><p class="sub">Your meals and insights stay with you, on your laptop and your phone.</p>
+      <form id="signup-form" class="stack" novalidate>
+        <div class="field"><label for="su-name">Your name</label><input class="input" id="su-name" autocomplete="name" placeholder="Arjun Kapoor"><span class="hint" id="su-name-hint"></span></div>
+        <div class="field"><label for="su-email">Email</label><input class="input" id="su-email" type="email" autocomplete="email" placeholder="arjun@example.com"><span class="hint" id="su-email-hint"></span></div>
+        <div class="field"><label for="su-pass">Password</label><div class="pw"><input class="input" id="su-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters"><button type="button" class="pw-toggle rp" data-pw="su-pass" aria-pressed="false" aria-label="Show password">Show</button></div><span class="hint" id="su-pass-hint"></span></div>
+        <p class="small muted" style="margin:0">Meal photos are never shared, never used for ads, and never sold.</p>
+        <button class="btn btn-primary block rp" type="submit">Create account</button>
+        <p class="or-row">Already have an account? <button type="button" class="link rp" data-auth="login">Log in</button></p>
+      </form>`;
+    requestAnimationFrame(() => { $('#ob-bar').style.transform = 'scaleX(.2)'; });
+    $('#su-name').focus();
+    $('#signup-form').onsubmit = async e => {
+      e.preventDefault();
+      const nm = $('#su-name').value.trim(), em = $('#su-email').value.trim(), pw = $('#su-pass').value;
+      let ok = setHint('#su-name-hint', nm ? '' : 'Add your name so Gutly knows what to call you.');
+      ok = setHint('#su-email-hint', !em ? 'Add your email.' : EMAIL_RE.test(em) ? '' : 'That email looks incomplete. Check for a missing @ or dot.') && ok;
+      ok = setHint('#su-pass-hint', pw.length >= 8 ? '' : `Use at least 8 characters (${pw.length} so far).`) && ok;
+      if(!ok) return;
+      S.account = {name:nm, email:em.toLowerCase(), hash:await hashPw(pw)};
+      S.loggedIn = true; S.guest = false; S.name = nm.split(/\s+/)[0]; S.fullName = nm; S.email = em; S.onboarded = false; save(); buzz(16);
+      showQuestion(1); toast(`Account created. Hi, ${S.name}!`);
+    };
+    return;
+  }
+  card.innerHTML = `<div class="ob-top"><button class="back rp" data-auth="welcome"><svg class="ic sm"><use href="#i-back"/></svg>Back</button><span class="wordmark">Gutly</span></div>
+    <h1 class="title" style="margin-top:14px">Welcome back</h1><p class="sub">Log in to pick up where you left off.</p>
+    <form id="login-form" class="stack" novalidate>
+      <div class="field"><label for="li-email">Email</label><input class="input" id="li-email" type="email" autocomplete="email" placeholder="arjun@example.com"></div>
+      <div class="field"><label for="li-pass">Password</label><div class="pw"><input class="input" id="li-pass" type="password" autocomplete="current-password" placeholder="Your password"><button type="button" class="pw-toggle rp" data-pw="li-pass" aria-pressed="false" aria-label="Show password">Show</button></div></div>
+      <p class="form-err" id="li-err" role="alert"></p>
+      <button class="btn btn-primary block rp" type="submit">Log in</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><button type="button" class="btn-text rp" id="forgot">Forgot password?</button><p class="or-row">New to Gutly? <button type="button" class="link rp" data-auth="signup">Create an account</button></p></div>
+    </form>`;
+  $('#li-email').focus();
+  $('#forgot').onclick = () => { const em = $('#li-email').value.trim(); $('#li-err').textContent = ''; toast(em ? `If ${em} has an account, a reset link would go there. Not live in this prototype.` : 'Enter your email first, then click Forgot password.'); };
+  $('#login-form').onsubmit = async e => {
+    e.preventDefault();
+    const em = $('#li-email').value.trim().toLowerCase(), pw = $('#li-pass').value, err = $('#li-err');
+    if(!em || !pw){ err.textContent = 'Enter your email and password.'; return; }
+    if(!S.account || S.account.email !== em){ err.textContent = "We couldn't find an account with that email on this device. Check it, or create an account."; return; }
+    if(S.account.hash !== await hashPw(pw)){ err.textContent = "That password doesn't match. Try again, or use Forgot password."; return; }
+    S.loggedIn = true; S.guest = false; S.name = S.account.name.split(/\s+/)[0]; S.fullName = S.account.name; S.email = S.account.email; save(); buzz(16);
+    S.onboarded ? go('today') : showQuestion(1); toast(`Welcome back, ${S.name}.`);
+  };
+}
+function showQuestion(n){
+  shell(); const card = $('#ob-card'), q = QS[n-1], picked = ans(n);
+  card.innerHTML = `<div class="ob-top">${n > 1 ? `<button class="back rp" id="ob-back"><svg class="ic sm"><use href="#i-back"/></svg>Back</button>` : `<span class="wordmark">Gutly</span>`}<button class="btn-text rp" id="ob-skip">Skip</button></div>
+    <div class="progress" aria-hidden="true"><i id="ob-bar" style="transform:scaleX(${n/5})"></i></div><p class="step-of">Step ${n+1} of 5</p>
+    ${n === 1 ? `<img class="mascot idle only-narrow" src="${MASCOT.happy}" width="104" alt="" style="margin:6px 0 4px">` : ''}
+    <h1 class="title">${esc(q.q)}</h1><p class="multi-note">Pick as many as apply, or write your own.</p>
+    <div id="ob-picker"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:24px"><button class="btn btn-primary rp" id="ob-next" ${picked.length ? '' : 'disabled'}>${n < 4 ? 'Continue' : 'Finish'}</button></div>`;
+  requestAnimationFrame(() => { $('#ob-bar').style.transform = `scaleX(${(n+1)/5})`; });
+  const next = () => n < 4 ? showQuestion(n + 1) : finish();
+  if(n > 1) $('#ob-back').onclick = () => showQuestion(n - 1);
+  $('#ob-skip').onclick = next; $('#ob-next').onclick = next;
+  renderPicker($('#ob-picker'), n, 'own-ob', a => { $('#ob-next').disabled = !a.length; });
+}
+function finish(){
+  S.onboarded = true; save(); buzz(16); go('today');
+  toast(S.name ? `You're all set, ${S.name}. Press L any time to log a meal.` : "You're all set. Press L any time to log a meal.");
+}
+
+/* ===== today ===== */
+const rowThumb = x => x.type === 'meal' ? (x.thumb ? `<img class="thumb" src="${x.thumb}" alt="">` : `<span class="thumb"><svg class="ic sm"><use href="#i-note"/></svg></span>`) : `<span class="thumb"><svg class="ic sm"><use href="#i-mood"/></svg></span>`;
+const rowText = x => x.type === 'meal' ? esc(x.title) + (x.note ? ` <span class="muted">· ${esc(x.note)}</span>` : '') : 'Check-in · ' + esc(x.tags.join(', '));
+function renderToday(){
+  $('#today-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'});
+  $('#today-title').textContent = S.name ? `How's your gut today, ${S.name}?` : "How's your gut today?";
+  $('#today-mascot').src = MASCOT[S.mood] || MASCOT.calm;
+  const t = todays();
+  const nm = t.filter(x => x.type === 'meal').length, nc = t.filter(x => x.type === 'check').length, pl = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  $('#today-count').textContent = t.length ? `${pl(nm, 'meal')} · ${pl(nc, 'check-in')}` : '';
+  $('#today-list').innerHTML = t.length
+    ? `<div class="timeline">${t.map(x => `<div class="tl-row"><time>${fmt(x.time)}</time>${rowThumb(x)}<span>${rowText(x)}</span></div>`).join('')}</div>${t[t.length-1].type === 'meal' ? `<p class="small muted" style="margin:8px 0 0">We'll check in gently in a couple of hours.</p>` : ''}`
+    : `<div class="empty"><p>Nothing logged yet today.</p></div>`;
+  const ins = INSIGHTS.find(i => !S.dismissed.includes(i.id));
+  $('#today-insight').innerHTML = ins
+    ? `<div class="card ins-card"><div class="eyebrow" style="margin-bottom:8px">One thing we're noticing</div>${conf(ins.level)}<p class="obs">${esc(ins.obs)}</p><p class="re">${esc(ins.re)}</p><button class="link rp" id="today-why">Why this?<svg class="ic sm"><use href="#i-chev"/></svg></button></div>`
+    : `<div class="quiet">No strong insight yet. Patterns show up after a few days of logging.</div>`;
+  if(ins) $('#today-why').onclick = () => go('insights', {expand: ins.id});
+  $('#checkin-btn').firstChild.textContent = S.skips >= 2 ? 'Check in, if you like ' : 'Check in ';
+  const ideas = [...MEALS.filter(m => m.when.includes(slot())), ...MEALS.filter(m => !m.when.includes(slot()))].slice(0, 3);
+  $('#today-ideas').innerHTML = ideas.map((m, i) => `<button class="idea-row rp" data-view="meals" style="--i:${i}"><span class="dot"></span><span class="grow"><span class="t">${esc(m.name)}</span><span class="d">${esc(m.why)}</span></span></button>`).join('');
+}
+
+/* ===== log meal dialog + camera ===== */
+let stream = null, photoBlob = null;
+const GUESS = {breakfast:'Chai with poha', lunch:'Dal-chawal with salad', dinner:'Moong dal khichdi'};
+function livePolicy(){ const pp = document.permissionsPolicy || document.featurePolicy; try { if(pp && pp.allowsFeature) return pp.allowsFeature('camera'); } catch(_){} return null; }
+function openNativeCamera(){ const act = navigator.userActivation; if(act && !act.isActive) return false; try { $('#cam-input').click(); return true; } catch(_){ return false; } }
+function stopCamera(){ if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+function openLog(){
+  photoBlob = null;
+  openModal(`<div class="dialog-head"><h2>Log a meal</h2><button class="icon-btn rp" data-close aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+    <div class="log-grid">
+      <div>
+        <div class="viewfinder" id="vf"><span class="live" id="live" hidden>Camera on</span><div class="vf-msg" id="vf-msg"><svg class="ic" style="width:40px;height:40px"><use href="#i-camera"/></svg><strong id="vf-title">Opening your camera…</strong><span id="vf-hint"></span></div></div>
+        <div class="cam-actions" id="cam-actions">
+          <button class="btn btn-secondary rp" id="snap" hidden><svg class="ic sm"><use href="#i-camera"/></svg>Take photo</button>
+          <label class="btn btn-secondary rp" id="pick"><svg class="ic sm"><use href="#i-image"/></svg>Choose photo<input type="file" id="gal-input" accept="image/*"></label>
+          <button class="btn btn-secondary rp" id="no-photo"><svg class="ic sm"><use href="#i-note"/></svg>Just a note</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="field"><label for="meal-name">What was it?</label><input class="input" id="meal-name" placeholder="e.g. dal-chawal with salad"><span class="ai-line" id="ai-line">Take or choose a photo and Gutly will name it, or just type.</span></div>
+        <div class="field"><label for="meal-note">Add a note (optional)</label><textarea class="input" id="meal-note" placeholder="Ate in a hurry, extra spicy…"></textarea><div class="note-chips" id="note-chips">${NOTE_CHIPS.map(c => `<button class="pill sm rp" type="button" aria-pressed="false">${esc(c)}</button>`).join('')}</div></div>
+        <p class="small muted" style="margin:0">No calories, macros or scores. Just context.</p>
+        <button class="btn btn-primary block rp" id="save-meal">Save meal</button>
+      </div>
+    </div>`, '', wireLog, stopCamera);
+}
+function wireLog(d){
+  const vf = $('#vf', d), title = $('#vf-title', d), hint = $('#vf-hint', d);
+  const asDrop = msg => { vf.classList.add('drop'); title.textContent = 'Drop a photo here'; hint.textContent = msg; };
+  const canLive = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && livePolicy() !== false;
+  if(canLive){
+    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false}).then(s => {
+      if(!$('#vf')){ s.getTracks().forEach(t => t.stop()); return; }
+      stream = s; const v = document.createElement('video'); v.playsInline = true; v.muted = true; v.srcObject = s; vf.prepend(v); v.play().catch(() => {});
+      $('#vf-msg', d).hidden = true; $('#live', d).hidden = false; $('#snap', d).hidden = false;
+    }).catch(() => { if(coarse() && openNativeCamera()) asDrop('Your camera is open. Closed it? Choose a photo below.'); else asDrop('Your browser blocked the webcam here. Choose a photo, drop one in, or just write a note.'); });
+  } else if(coarse() && openNativeCamera()) asDrop('Your camera is open. Closed it? Choose a photo below.');
+  else asDrop('This browser frame blocks the webcam. Choose a photo, drop one in, or just write a note.');
+  $('#snap', d).onclick = () => {
+    const v = $('video', vf); if(!v) return;
+    const c = document.createElement('canvas'); c.width = v.videoWidth || 1280; c.height = v.videoHeight || 960;
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    c.toBlob(b => { if(b) captured(b); }, 'image/jpeg', .88);
+  };
+  $('#gal-input', d).onchange = e => { const f = e.target.files && e.target.files[0]; if(f) captured(f); };
+  $('#no-photo', d).onclick = () => { stopCamera(); vf.innerHTML = `<div class="vf-msg"><svg class="ic" style="width:40px;height:40px"><use href="#i-note"/></svg><strong>No photo needed</strong><span>A note after the meal works just as well.</span></div>`; vf.classList.add('drop'); $('#ai-line', d).textContent = ''; $('#meal-name', d).focus(); };
+  ['dragenter','dragover'].forEach(ev => vf.addEventListener(ev, e => { e.preventDefault(); vf.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => vf.addEventListener(ev, e => { e.preventDefault(); vf.classList.remove('over'); }));
+  vf.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) captured(f); else toast('That file isn’t a photo. Try a JPG or PNG.'); });
+  $('#note-chips', d).onclick = e => {
+    const p = e.target.closest('.pill'); if(!p) return;
+    const on = p.classList.toggle('on'); p.setAttribute('aria-pressed', on);
+    const ta = $('#meal-note', d), parts = ta.value.split(',').map(s => s.trim()).filter(Boolean), v = p.textContent.toLowerCase();
+    ta.value = (on ? [...parts, v] : parts.filter(x => x.toLowerCase() !== v)).join(', ');
+  };
+  $('#save-meal', d).onclick = saveMeal;
+}
+$('#cam-input').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f && $('#vf')) captured(f); e.target.value = ''; });
+function downscale(blob, max){
+  return new Promise(res => {
+    const url = URL.createObjectURL(blob), img = new Image();
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .8)); };
+    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+async function captured(blob){
+  stopCamera(); photoBlob = blob;
+  const vf = $('#vf'); if(!vf) return;
+  const prev = await downscale(blob, 900);
+  vf.classList.remove('drop');
+  vf.innerHTML = prev ? `<img src="${prev}" alt="Your meal">` : `<div class="vf-msg">Couldn't show that photo, but you can still save the meal.</div>`;
+  $('#snap') && ($('#snap').hidden = true);
+  const name = $('#meal-name'), line = $('#ai-line');
+  if(AI.images){
+    line.innerHTML = `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Gutly is reading your plate…`;
+    try {
+      const r = await aiDish(blob);
+      if(!$('#meal-name')) return;
+      if(r && typeof r.dish === 'string' && r.dish.trim()){ if(!name.value) name.value = r.dish.trim().slice(0, 60); line.textContent = r.confidence === 'low' ? "Gutly isn't sure. Edit it if it's off." : 'Named by Gutly from your photo. Edit it if it’s off.'; }
+      else line.textContent = "Gutly couldn't name this one. Type what it was.";
+    } catch(e){
+      if($('#ai-line')) line.textContent = e && e.code === 'not_granted' ? 'Photo naming is off. Type what it was.' : "Couldn't name it just now. Type what it was.";
+      if(e && ['not_granted','sampling_disabled','images_unavailable'].includes(e.code)) AI.images = false;
+    }
+  } else { if(!name.value) name.value = GUESS[slot()]; line.textContent = 'Offline guess from the time of day. Edit it if it’s off.'; }
+}
+async function saveMeal(){
+  const d = $('#layer .dialog'); if(!d) return;
+  const title = $('#meal-name').value.trim() || (photoBlob ? 'Meal (photo)' : 'Meal');
+  const thumb = photoBlob ? await downscale(photoBlob, 120) : null;
+  S.logs.push({type:'meal', time:Date.now(), title, note:$('#meal-note').value.trim(), thumb}); S.logs = S.logs.slice(-60); save();
+  stopCamera();
+  d.insertAdjacentHTML('beforeend', `<div class="saved" role="status"><img class="mascot" src="${MASCOT.excited}" alt="" id="saved-m"><p>Saved — we'll keep this in mind.</p></div>`);
+  celebrate($('#saved-m'));
+  setTimeout(() => { closeModal(); if(view === 'today') renderToday(); }, 1400);
+}
+
+/* ===== check-in dialog ===== */
+function openCheckin(){
+  openModal(`<div class="dialog-head"><h2>Anything worth noting?</h2><button class="icon-btn rp" data-close aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+    <p class="muted" style="margin:-6px 0 16px">Pick up to two feelings.</p>
+    <p class="eyebrow" style="margin:0 0 10px">How you feel</p>
+    <div class="moods stagger" id="ci-mood">${MOODS.map((m, i) => `<button class="mood rp" data-mood="${m.k}" aria-pressed="false" style="--i:${i}"><img src="${MASCOT[m.k]}" alt=""><span>${m.l}</span></button>`).join('')}</div>
+    <p class="eyebrow" style="margin:22px 0 10px">How your gut feels</p>
+    <div class="pills" id="ci-gut">${GUTS.map(g => `<button class="pill rp" aria-pressed="false">${g}</button>`).join('')}</div>
+    <div class="dialog-actions"><button class="btn-text rp" id="skip-ci">Skip for now</button><button class="btn btn-primary rp" id="save-ci" disabled>Save check-in</button></div>`, '', d => {
+      d.addEventListener('click', e => {
+        const m = e.target.closest('.mood'), p = e.target.closest('#ci-gut .pill');
+        if(m){ const on = m.getAttribute('aria-pressed') !== 'true'; if(on && $$('.mood[aria-pressed="true"]', d).length >= 2){ toast('Two is plenty. Unselect one to swap.'); return; } m.setAttribute('aria-pressed', on); if(on) celebrate(m.querySelector('img')); }
+        if(p){ const on = p.classList.toggle('on'); p.setAttribute('aria-pressed', on); }
+        $('#save-ci', d).disabled = !$$('.mood[aria-pressed="true"], #ci-gut .pill.on', d).length;
+      });
+      $('#skip-ci', d).onclick = () => { S.skips++; save(); closeModal(); if(view === 'today') renderToday(); toast(S.skips >= 2 ? "No problem. We'll ask less often." : 'No problem.'); };
+      $('#save-ci', d).onclick = () => {
+        const moods = $$('.mood[aria-pressed="true"]', d).map(m => m.dataset.mood);
+        const tags = [...moods.map(k => MOODS.find(x => x.k === k).l), ...$$('#ci-gut .pill.on', d).map(p => p.textContent)];
+        if(moods[0]) S.mood = moods[0];
+        S.logs.push({type:'check', time:Date.now(), tags}); save(); closeModal();
+        if(view === 'today'){ renderToday(); celebrate($('#today-mascot')); } else buzz(16);
+        toast('Noted. This only adds context.');
+      };
+    });
+}
+
+/* ===== insights ===== */
+let loaded = false;
+function renderInsights(){
+  countUp($('#ev-m'), SEED.meals + S.logs.filter(x => x.type === 'meal').length);
+  countUp($('#ev-c'), SEED.checkins + S.logs.filter(x => x.type === 'check').length);
+  countUp($('#ev-d'), SEED.days);
+  const el = $('#ins-list');
+  if(!loaded){ el.className = 'ins-grid'; el.innerHTML = '<div class="skel" aria-label="Loading insights"></div><div class="skel"></div>'; setTimeout(() => { loaded = true; if(view === 'insights') renderInsights(); }, 450); return; }
+  const list = INSIGHTS.filter(i => !S.dismissed.includes(i.id));
+  if(!list.length){ el.className = ''; el.innerHTML = `<div class="empty"><img src="${MASCOT.calm}" alt=""><p>No insights to show right now. Keep logging when it suits you, and patterns will show up here.</p></div><button class="btn-text rp" id="restore">Show hidden insights again</button>`; $('#restore').onclick = () => { S.dismissed = []; save(); renderInsights(); }; return; }
+  el.className = 'ins-grid stagger';
+  el.innerHTML = list.map((i, n) => { const open = expand === i.id; return `<article class="ins" style="--i:${n}">
+    <div class="ins-top">${conf(i.level)}<button class="icon-btn rp" data-dismiss="${i.id}" aria-label="Hide this insight"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+    <p class="obs">${esc(i.obs)}</p><p class="re">${esc(i.re)}</p>
+    <button class="link rp" data-why="${i.id}" aria-expanded="${open}">${open ? 'Hide details' : 'Why this?'}</button>
+    ${open ? `<div class="why"><span class="eyebrow">This showed up because</span><ul>${i.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul><button class="link rp" data-ask="${i.id}">Ask Gutly about this<svg class="ic sm"><use href="#i-chev"/></svg></button></div>` : ''}</article>`; }).join('');
+}
+$('#ins-list').addEventListener('click', e => {
+  const w = e.target.closest('[data-why]'), d = e.target.closest('[data-dismiss]'), a = e.target.closest('[data-ask]');
+  if(w){ expand = expand === w.dataset.why ? null : w.dataset.why; renderInsights(); }
+  if(d){ const id = d.dataset.dismiss; d.closest('.ins').classList.add('out'); setTimeout(() => { S.dismissed.push(id); save(); renderInsights(); }, 220); toast("Got it. We won't show that one.", {label:'Undo', fn:() => { S.dismissed = S.dismissed.filter(x => x !== id); save(); renderInsights(); }}); }
+  if(a){ const i = INSIGHTS.find(x => x.id === a.dataset.ask); go('guti'); setTimeout(() => sendUser(i.ask), 260); }
+});
+
+/* ===== meals ===== */
+const FILTERS = [['all','Any time'],['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['saved','Saved']];
+const mealCard = (m, low, i) => { const sv = S.saved.includes(m.id); return `<article class="meal${low ? ' low' : ''}" style="--i:${i}"><div class="grow"><h3>${esc(m.name)}</h3><div class="when">${m.when.join(' or ')}</div><p>${esc(m.why)}</p>${low ? '' : `<div style="margin-top:8px">${conf(m.level, false)}</div>`}</div><button class="icon-btn rp" data-save="${m.id}" aria-pressed="${sv}" aria-label="${sv ? 'Saved for later. Click to remove' : 'Save for later'}"><svg class="ic sm"><use href="#i-mark"/></svg></button></article>`; };
+function renderMeals(){
+  $('#meal-filters').innerHTML = FILTERS.map(([k, l]) => `<button class="pill sm rp${S.filter === k ? ' on' : ''}" data-filter="${k}" aria-pressed="${S.filter === k}">${l}</button>`).join('');
+  const f = m => S.filter === 'all' || (S.filter === 'saved' ? S.saved.includes(m.id) : m.when.includes(S.filter));
+  const a = MEALS.filter(f), b = MEALS_LOW.filter(f);
+  const ml = $('#meal-list'); ml.className = a.length ? 'meal-grid stagger' : '';
+  ml.innerHTML = a.length ? a.map((m, i) => mealCard(m, false, i)).join('') : `<div class="empty"><img src="${MASCOT.tired}" alt=""><p>${S.filter === 'saved' ? 'Nothing saved yet. Click the bookmark on any idea to keep it here.' : 'Nothing stands out for this time yet.'}</p></div>`;
+  const lw = $('#meal-low'); lw.className = b.length ? 'meal-grid' : '';
+  lw.innerHTML = b.length ? b.map((m, i) => mealCard(m, true, i)).join('') : `<div class="quiet">Nothing here for this filter.</div>`;
+}
+$('#meals').addEventListener('click', e => {
+  const f = e.target.closest('[data-filter]'), s = e.target.closest('[data-save]');
+  if(f){ S.filter = f.dataset.filter; save(); renderMeals(); }
+  if(s){ const id = s.dataset.save, had = S.saved.includes(id); S.saved = had ? S.saved.filter(x => x !== id) : [...S.saved, id]; save(); renderMeals(); if(!had) buzz(12); toast(had ? 'Removed from saved.' : 'Saved for later.'); }
+});
+
+/* ===== profile ===== */
+const PROF_Q = ['Brings you here','Feels off','Help with','Support'];
+function renderProfile(){
+  const full = S.fullName || 'Guest';
+  $('#prof-av').textContent = (full[0] || 'A').toUpperCase(); $('#prof-name').textContent = full;
+  $('#prof-meta').textContent = S.guest ? 'Exploring without an account' : (S.email || '') + (S.waitlist ? ' · Plus waitlist' : ' · Free plan');
+  $('#signout').textContent = S.guest ? 'Leave guest mode' : 'Log out';
+  const logs = [...S.logs].reverse().slice(0, 30);
+  $('#prof-log').innerHTML = logs.length ? logs.map(x => `<div class="log-row">${rowThumb(x)}<div class="grow"><time>${new Date(x.time).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${fmt(x.time)}</time>${rowText(x)}</div></div>`).join('')
+    : `<div class="empty"><img src="${MASCOT.calm}" alt=""><p>Your meals and check-ins will appear here. Nothing yet.</p></div>`;
+  $('#prof-answers').innerHTML = QS.map((_, i) => `<div class="row"><span>${PROF_Q[i]}</span><span>${esc(ans(i+1).join(', ') || 'Skipped')}</span></div>`).join('');
+  syncThemeUI();
+}
+$('#edit-answers').addEventListener('click', () => openModal(`<div class="dialog-head"><h2>What you told us</h2><button class="icon-btn rp" data-close aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+  <p class="muted" style="margin:-6px 0 18px">Pick as many as apply, or write your own. Changes save as you go.</p>${QS.map((q, i) => `<div class="q-block"><h3>${esc(q.q)}</h3><div id="pf-pick-${i+1}"></div></div>`).join('')}
+  <div class="dialog-actions"><button class="btn btn-primary rp" data-close>Done</button></div>`, '',
+  d => { QS.forEach((_, i) => renderPicker($('#pf-pick-' + (i+1), d), i+1, 'own-pf')); }, () => setTimeout(() => { if(view === 'profile') renderProfile(); }, 0)));
+$('#plus-btn').addEventListener('click', () => openModal(`<div class="dialog-head"><h2>Gutly Plus</h2><button class="icon-btn rp" data-close aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button></div>
+  <p class="muted" style="margin:0">Planned for ₹149 a month or ₹999 a year. Not live yet.</p><ul><li>Gutly remembers months, not weeks</li><li>A gentle weekly reflection</li><li>A two-week report to share with your doctor</li></ul>
+  <div class="dialog-actions"><button class="btn-text rp" data-close>Not now</button><button class="btn btn-primary rp" id="wl" ${S.waitlist ? 'disabled' : ''}>${S.waitlist ? "You're on the waitlist" : 'Join the waitlist'}</button></div>`, 'narrow',
+  d => { $('#wl', d).onclick = () => { S.waitlist = true; save(); closeModal(); renderProfile(); buzz(16); toast("You're on the Plus waitlist."); }; }));
+const confirmReset = (title, msg, label, done) => openModal(`<div class="dialog-head"><h2>${title}</h2></div><p class="muted">${msg}</p><div class="dialog-actions"><button class="btn-text rp" data-close>Cancel</button><button class="btn btn-primary rp" id="cf">${label}</button></div>`, 'narrow',
+  d => { $('#cf', d).onclick = () => { const keep = {side:S.side, theme:S.theme}; S = Object.assign(fresh(), keep); save(); closeModal(); go('today'); toast(done); }; });
+$('#signout').addEventListener('click', () => {
+  if(S.guest){ openModal(`<div class="dialog-head"><h2>Leave guest mode?</h2></div><p class="muted">Guest data isn't tied to an account, so leaving clears it from this device.</p><div class="dialog-actions"><button class="btn-text rp" data-close>Stay</button><button class="btn btn-primary rp" id="cf">Leave and clear</button></div>`, 'narrow',
+    d => { $('#cf', d).onclick = () => { const keep = {side:S.side, theme:S.theme, account:S.account}; S = Object.assign(fresh(), keep); save(); closeModal(); go('today'); toast('Guest data cleared.'); }; }); return; }
+  openModal(`<div class="dialog-head"><h2>Log out?</h2></div><p class="muted">Your meals, chat and answers stay on this device. Log back in with the same email and password to pick up where you left off.</p><div class="dialog-actions"><button class="btn-text rp" data-close>Stay logged in</button><button class="btn btn-primary rp" id="cf">Log out</button></div>`, 'narrow',
+    d => { $('#cf', d).onclick = () => { S.loggedIn = false; save(); closeModal(); go('today'); toast('Logged out. Your data is saved on this device.'); }; });
+});
+$('#reset').addEventListener('click', () => confirmReset('Reset the demo?', 'Clears everything and starts onboarding again. Theme and sidebar stay as they are.', 'Reset', 'Demo reset.'));
+
+/* ===== theme ===== */
+const root = document.documentElement;
+let hostTheme = root.getAttribute('data-theme'), applying = false;
+const isDark = () => { const a = root.getAttribute('data-theme'); return a ? a === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+function syncThemeUI(){
+  $$('#theme-seg [data-theme-opt]').forEach(b => b.setAttribute('aria-checked', b.dataset.themeOpt === S.theme));
+  const q = $('#theme-quick'), d = isDark(), lbl = d ? 'Switch to light mode' : 'Switch to dark mode';
+  q.innerHTML = `<svg class="ic sm"><use href="#i-${d ? 'sun' : 'moon'}"/></svg>`; q.setAttribute('aria-label', lbl); q.title = lbl;
+}
+function applyTheme(){ applying = true; if(S.theme === 'light' || S.theme === 'dark') root.setAttribute('data-theme', S.theme); else if(hostTheme) root.setAttribute('data-theme', hostTheme); else root.removeAttribute('data-theme'); applying = false; syncThemeUI(); }
+new MutationObserver(() => { if(applying) return; if(S.theme === 'system'){ hostTheme = root.getAttribute('data-theme'); syncThemeUI(); } else if(root.getAttribute('data-theme') !== S.theme){ hostTheme = root.getAttribute('data-theme'); applyTheme(); } }).observe(root, {attributes:true, attributeFilter:['data-theme']});
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeUI); } catch(_){}
+function setTheme(t){ S.theme = t; save(); applyTheme(); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
+$('#theme-seg').addEventListener('click', e => { const b = e.target.closest('[data-theme-opt]'); if(b) setTheme(b.dataset.themeOpt); });
+$('#theme-quick').addEventListener('click', () => setTheme(isDark() ? 'light' : 'dark'));
+
+/* ===== Gutly: AI + offline ===== */
+const AI = {sample:null, live:false, images:false, decided:false, mode:'off'};
+const API_BASE = '/api/';
+const DISH_PROMPT = 'This photo shows a meal someone is about to eat, most likely Indian home, canteen or delivery food. Reply with only JSON: {"dish": string, "confidence": "high" | "medium" | "low"}. "dish" is a plain everyday name of 2 to 5 words, for example "dal-chawal with salad" or "masala dosa". If it is not food, use an empty string. Do not comment on health, calories or portions.';
+/* AI runs through claude.ai when the page is an artifact, or through this site's own /api functions when deployed (e.g. on Vercel). */
+async function aiChat(turns, onText, signal){
+  if(AI.mode === 'claude') return AI.sample([{role:'user', content:rules()}, ...turns], {modelTier:'quick', cache:false, signal, onText});
+  let r;
+  try { r = await fetch(API_BASE + 'chat', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({context:rules(), messages:turns}), signal}); }
+  catch(e){ const err = new Error('network'); err.code = e && e.name === 'AbortError' ? 'cancelled' : 'upstream'; throw err; }
+  if(!r.ok){ const err = new Error('server ' + r.status); err.code = r.status === 429 ? 'rate_limited' : r.status === 503 ? 'sampling_disabled' : 'upstream'; throw err; }
+  const j = await r.json(); const text = String((j && j.text) || ''); onText && onText({text}); return {text};
+}
+async function aiDish(blob){
+  if(AI.mode === 'claude') return AI.sample.json(DISH_PROMPT, {images:[blob], modelTier:'quick'});
+  const image = await downscale(blob, 768);
+  const r = await fetch(API_BASE + 'dish', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({image})});
+  if(!r.ok){ const err = new Error('dish ' + r.status); err.code = r.status === 503 ? 'images_unavailable' : 'upstream'; throw err; }
+  return r.json();
+}
+function setStatus(){ const st = $('#ai-status'); st.className = 'status ' + (!AI.decided ? '' : AI.live ? 'ai' : 'off'); st.lastElementChild.textContent = !AI.decided ? 'Checking…' : AI.live ? 'AI · replies from Claude' : 'Offline · scripted replies'; }
+(async () => {
+  try {
+    const s = window.claude && window.claude.use ? await window.claude.use('sample') : null;
+    if(s){ AI.sample = s; AI.live = true; AI.mode = 'claude'; const lim = await s.limits().catch(() => null); AI.images = !!(lim && lim.images); }
+  } catch(_){}
+  if(!AI.live && !(window.claude && window.claude.use) && /^https?:$/.test(location.protocol)){
+    try { const r = await fetch(API_BASE + 'chat', {cache:'no-store'}); if(r.ok){ const j = await r.json(); if(j && j.ok){ AI.live = true; AI.mode = 'server'; AI.images = !!j.images; } } } catch(_){}
+  }
+  AI.decided = true; setStatus();
+})();
+setTimeout(() => { if(!AI.decided){ AI.decided = true; setStatus(); } }, 11000);
+const RED = /(blood|black stool|vomit|fever|severe|weight loss|losing weight|faint|chest pain|can'?t keep (food|anything) down)/i;
+const HARM = /(suicid|kill myself|end my life|self[- ]?harm|hurt myself|want to die|don'?t want to live)/i;
+const ED = /(starv|purg|make myself (sick|throw up)|stop eating to lose|skip(ping)? meals to lose)/i;
+function safetyCheck(t){
+  if(HARM.test(t)) return {lines:["I'm really glad you told me. You deserve support from a person right now, not just an app.","In India you can call Tele-MANAS on 14416, free and open 24 hours. If you might act on these thoughts, call 112 now or go to the nearest emergency department.","I'm here to keep talking too."], replies:[]};
+  if(RED.test(t)) return {lines:["Thank you for telling me. Blood, fever, vomiting, weight loss, or pain that's severe or won't settle are things a doctor needs to hear about, and soon.","I'm not able to assess symptoms like these, and I don't want to guess. I'm still here for anything else on your mind."], replies:['Okay','Something else']};
+  if(ED.test(t)) return {lines:["Thanks for being honest about that. Restricting food to lose weight is something a doctor or counsellor can help with properly, and Gutly isn't built for it.","I'm happy to keep talking about how meals feel, without any targets or rules."], replies:['Okay']};
+  return null;
+}
+function rules(){
+  const recent = S.logs.slice(-8).map(x => x.type === 'meal' ? `- ${fmt(x.time)} ${new Date(x.time).toDateString()}: ate ${x.title}${x.note ? ' (' + x.note + ')' : ''}` : `- ${fmt(x.time)} ${new Date(x.time).toDateString()}: check-in ${x.tags.join(', ')}`).join('\n') || '- nothing logged in the app yet';
+  return `You are Gutly, the gut-health companion chat inside the Gutly app for young people in India. You are talking with ${S.name || 'someone exploring as a guest'}.
+How you speak: calm, warm, observational and curious, like a cautious friend. Short: 2 to 4 sentences. Plain words. Hedged language ("might", "seemed", "could be"). Explain why you say something ("This showed up because..."). Accept contradictions.
+Never: diagnose, name a condition they might have, suggest medicines or supplements, rank foods as good or bad, tell them to avoid or cut a food, give calorie or weight advice, or sound more certain than a cautious human. If asked for any of that, say kindly that a doctor is the right person, and offer what their logs suggest instead.
+Use only the data below about them; don't invent logs.
+Their week (seeded demo data): chai with poha on 4 mornings, 3 followed by "calm"; rajma-chawal lunches on Tuesday and Thursday, both followed by "bloated" around 4 pm, and both were rushed days; dal with phulka at 3 dinners each followed by a "settled" morning; paneer with roti twice, one heavy morning; warm simple dinners (khichdi, dal-rice, curd rice) 9 times over 3 weeks, 8 followed by settled or light mornings. Meals that felt easier: moong dal khichdi, poha, dal with phulka, curd rice, idli with sambar.
+What they told us at setup: ${Object.values(S.answers).flat().join('; ') || 'skipped'}.
+Logged in the app:
+${recent}
+Format: write the reply as plain text, no markdown, no lists. Then on a final new line write "CHIPS:" followed by up to 3 short replies they might tap next, separated by " | ", each under 5 words.`;
+}
+function splitChips(text){ const i = text.lastIndexOf('CHIPS:'); if(i < 0) return {body:text.trim(), chips:[]}; return {body:text.slice(0, i).trim(), chips:text.slice(i + 6).split('|').map(s => s.trim()).filter(Boolean).slice(0, 3)}; }
+function scripted(text){
+  const l = text.toLowerCase(), has = (...w) => w.some(x => l.includes(x)), word = re => re.test(l);
+  const lastMeal = [...S.logs].reverse().find(x => x.type === 'meal' && dayKey(x.time) === dayKey(Date.now()));
+  if(has('ibs','diagnos','disease','wrong with me','do i have','cure','medicine','medication','tablet','supplement','probiotic','antacid')) return {lines:["That's a fair thing to wonder. I can't diagnose anything, and I'm not the right one to say what's going on medically. A doctor is.","What I can do is show you what your own logs suggest. Some people find that useful to bring to an appointment."], replies:['Summarise my week','Not now']};
+  if(has('avoid','bad for','good for','stop eating','cut out','unhealthy','healthy','safe to eat','safe food')) return {lines:["I don't sort foods into good or bad. Bodies vary, and the same food can feel different on different days.","Here's what I might be seeing for you: poha, khichdi and dal with phulka have usually been followed by settled check-ins. Rajma lunches felt heavier twice, both on rushed days. So it may be the day around the food as much as the food."], replies:['Tell me about rajma','Open meal ideas']};
+  if(has('rajma')) return {lines:["This showed up because rajma-chawal was your lunch on Tuesday and Thursday, and both afternoons you checked in as bloated around 4 pm.","Both of those days you'd also noted feeling rushed. Pace and stress can affect digestion on their own, so I'm holding this loosely. It's an early signal, not a conclusion."], replies:['Could be coincidence','I was rushed both days','Show my week']};
+  if(has('chai','poha','morning')) return {lines:["This showed up because you logged chai with poha on four mornings this week. On three of them, your check-in within two hours was calm or settled.","The fourth came after a late night, which might explain the difference. I'll keep watching."], replies:['That matches how I feel','Not sure']};
+  if(has('paneer','roti','phulka','dal and')) return {lines:["Dal with phulka came up at three dinners this week, each followed by a settled morning. Paneer with roti came up twice, and one of those mornings felt heavy.","Two paneer meals isn't much to go on, so this could easily change."], replies:['Show my week']};
+  if(has('dinners')) return {lines:["Over three weeks, warm simple dinners like khichdi, dal-rice and curd rice came up nine times. Eight were followed by a settled or light morning.","That's the steadiest pattern so far. It can still shift, and that's fine."], replies:['Open meal ideas']};
+  if(l.trim() === 'not now') return {lines:["No problem. I'm here whenever you want to come back to it."]};
+  if(word(/\b(yes|agree|matches|makes sense|true)\b/)) return {lines:["Good to hear it lines up with your own sense of things. Your read on your body matters more than any pattern I spot."]};
+  if(has('summar','my week','this week','pattern','notic')) return {lines:["Here's what I might be seeing this week: mornings with chai and poha seemed calmer; two heavier afternoons came after rajma lunches on rushed days; and dal with phulka seemed easier than paneer with roti.","These are still early. Patterns can shift, and that's normal."], replies:['Why rajma?','Why chai and poha?','What about stress?']};
+  if(has('rushed','stress','anxious','busy','deadline','meeting','hurry')) return {lines:["That's useful context, thank you. Pace and stress can affect digestion on their own, so I'll factor that in rather than pin things on a food.","Some of your calmest afternoons this week came after slower lunches."], replies:['Show my week','Thanks']};
+  if(has('bloat','heavy','gas','discomfort','uncomfortable','cramp','pain','upset')) return {lines:["That sounds uncomfortable. I'm sorry today feels this way.", lastMeal ? `I can see ${lastMeal.title.toLowerCase()} logged at ${fmt(lastMeal.time)}. On its own, one meal doesn't tell us much.` : null, "Your two other heavy afternoons this week came after rajma lunches, on days you'd also felt rushed. It could be the food, the pace, or both. What was today like?"], replies:['I was rushed','Had a calm lunch','Not sure']};
+  if(has('calm lunch','was calm','relaxed','slow')) return {lines:["Thanks. Then I'll treat today as one data point rather than a pattern. A single heavy afternoon doesn't mean much on its own."]};
+  if(has('not sure','coincidence','maybe','no idea',"don't know")) return {lines:["That's completely fair. A couple of days isn't much to go on.","I'll keep watching quietly. If it doesn't hold up, it'll fade from your insights on its own."]};
+  if(has('eat','meal','lunch','dinner','breakfast','hungry','food','cook')) return {lines:["Meals like moong dal khichdi, curd rice and poha have felt easier for you before. Just ideas, not a plan."], replies:['Open meal ideas']};
+  if(word(/\b(thanks|thank you|ok|okay|got it|cool)\b/)) return {lines:["Anytime. I'm here whenever something comes up."]};
+  return {lines:["I'm listening. Could you tell me a bit more, like when it started or what the day was like? The more context, the clearer the picture gets."], replies:['I felt bloated','I was stressed','Show my week']};
+}
+const body = $('#chat-body');
+const STARTERS = ['I felt bloated after lunch','What patterns do you see?','Why did the rajma insight show up?','Do I have IBS?'];
+const scrollDown = () => body.scrollTo({top: body.scrollHeight, behavior: reduced() ? 'auto' : 'smooth'});
+const bubbleHTML = text => text.split(/\n+/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+function addMsg(who, text, cls=''){ const row = document.createElement('div'); row.className = 'msg ' + who; row.innerHTML = `<div class="bubble ${cls}">${bubbleHTML(text)}</div>`; body.append(row); scrollDown(); return row.querySelector('.bubble'); }
+function renderContext(){
+  const t = todays();
+  $('#ctx-today').innerHTML = (t.length ? t.slice(-4).map(x => `<li>${fmt(x.time)} · ${x.type === 'meal' ? esc(x.title) : 'check-in: ' + esc(x.tags.join(', '))}</li>`).join('') : '<li>Nothing logged today yet</li>') + `<li>Your setup answers</li><li>The last 12 messages of this chat</li>`;
+}
+function renderChat(){
+  setStatus(); renderContext();
+  $('#chat-mascot').src = MASCOT.calm; body.innerHTML = '';
+  if(!S.turns.length){
+    body.innerHTML = `<div class="chat-empty"><h2>Tell me what's been going on.</h2><p>I notice patterns in what you log and help make sense of them. I can't diagnose anything.</p><div class="starters stagger">${STARTERS.map((s, i) => `<button class="starter rp" style="--i:${i}">${esc(s)}</button>`).join('')}</div></div>`;
+    $$('.starter', body).forEach(b => b.onclick = () => sendUser(b.textContent));
+  } else S.turns.forEach(t => addMsg(t.role === 'user' ? 'me' : 'guti', t.content));
+  showReplies(null);
+}
+function showReplies(list){
+  const q = $('#qr');
+  if(!list || !list.length){ q.hidden = true; q.innerHTML = ''; return; }
+  q.innerHTML = ''; q.hidden = false;
+  list.forEach(label => { const b = document.createElement('button'); b.className = 'pill rp'; b.type = 'button'; b.textContent = label; b.onclick = () => { if(/meal ideas/i.test(label)) go('meals'); else sendUser(label); }; q.append(b); });
+}
+let busy = false, ctl = null;
+function setBusy(on){ busy = on; const s = $('#send'); s.classList.toggle('stop', on); s.setAttribute('aria-label', on ? 'Stop' : 'Send'); s.innerHTML = `<svg class="ic sm"><use href="#i-${on ? 'stop' : 'send'}"/></svg>`; }
+function finishReply(text, chips, cls='', meta=''){
+  const b = addMsg('guti', text, cls); if(meta) b.insertAdjacentHTML('beforeend', `<p class="meta">${esc(meta)}</p>`);
+  S.turns.push({role:'assistant', content:text}); S.turns = S.turns.slice(-24); save(); showReplies(chips); setBusy(false);
+}
+async function sendUser(text){
+  text = String(text || '').trim(); if(!text || busy) return;
+  if(!S.turns.length) body.innerHTML = '';
+  showReplies(null); addMsg('me', text); S.turns.push({role:'user', content:text}); save();
+  const inp = $('#chat-input'); inp.value = ''; inp.style.height = '';
+  const safe = safetyCheck(text); if(safe){ finishReply(safe.lines.join('\n'), safe.replies, 'safety'); return; }
+  setBusy(true);
+  const b = addMsg('guti', ''); b.innerHTML = '<span class="dots" aria-label="Gutly is thinking"><i></i><i></i><i></i></span>';
+  if(AI.live){
+    ctl = new AbortController();
+    try {
+      const {text: out} = await aiChat(S.turns.slice(-12), ({text: t}) => { b.innerHTML = bubbleHTML(splitChips(t).body || '…'); scrollDown(); }, ctl.signal);
+      const {body: reply, chips} = splitChips(out);
+      b.innerHTML = bubbleHTML(reply); S.turns.push({role:'assistant', content:reply}); S.turns = S.turns.slice(-24); save(); showReplies(chips); setBusy(false); buzz(14); scrollDown(); return;
+    } catch(e){
+      const code = e && e.code;
+      b.closest('.msg').remove();
+      if(code === 'cancelled'){ const kept = e.text ? splitChips(e.text).body : ''; if(kept) finishReply(kept + '\n(stopped)', []); else setBusy(false); return; }
+      if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){ AI.live = false; setStatus(); }
+      const r = scripted(text);
+      finishReply(r.lines.filter(Boolean).join('\n'), r.replies, '', code === 'not_granted' ? 'AI replies are off for this page, so Gutly is using scripted replies.' : code === 'rate_limited' ? 'Gutly’s AI is busy right now. This is a scripted reply; try again in a bit.' : 'Couldn’t reach Gutly’s AI. This is a scripted reply.');
+      return;
+    }
+  }
+  await new Promise(r => setTimeout(r, 700 + Math.random() * 500));
+  b.closest('.msg').remove(); const r = scripted(text); finishReply(r.lines.filter(Boolean).join('\n'), r.replies);
+}
+$('#composer').addEventListener('submit', e => { e.preventDefault(); if(busy){ ctl && ctl.abort(); return; } sendUser($('#chat-input').value); });
+$('#chat-input').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if(!busy) sendUser(e.target.value); } });
+$('#chat-input').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'; });
+$('#chat-clear').addEventListener('click', () => { if(busy) return; S.turns = []; save(); renderChat(); toast('New chat started.'); });
+
+/* ===== boot ===== */
+applyTheme(); setSide(S.side);
+const h = location.hash.slice(1);
+go(VIEWS.includes(h) ? h : 'today');
+})();
+</script>

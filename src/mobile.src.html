@@ -1,0 +1,1499 @@
+<title>Gutly Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: collapsible reviewer sidebar + device stage on desktop; device full-bleed on phones. 70-30-10: oat-mist base, plum ink structure, apricot action. */
+:root{
+  --bg:#F5F4F7; --surface:#FFFFFF; --surface-2:#ECE9F2; --line:#D9D4E3;
+  --ink:#2A2337; --muted:#655E73;
+  --accent:#F28C38; --accent-deep:#A9520C; --accent-press:#C46A1F; --accent-tint:#FDEBDC; --on-accent:#2A2337;
+  --success:#23744F; --warn:#8A5A00; --danger:#B3261E; --info:#2F5DA8;
+  --stage:#E7E4EE; --bezel:#2A2337; --scrim:rgba(20,16,28,.45);
+  --font-display:'Baloo 2', 'Figtree', ui-rounded, system-ui, sans-serif;
+  --font-ui:'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --fs-title:clamp(1.55rem, 1.15rem + 1.4vw, 2rem); --fs-h2:1.25rem; --fs-body:1rem; --fs-sm:.875rem; --fs-xs:.78rem;
+  --r-sm:12px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+  --t-fast:150ms; --t-med:220ms; --t-slow:400ms;
+  --ease:cubic-bezier(.2,.7,.2,1); --glide:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --shadow-1:0 1px 2px rgba(42,35,55,.06), 0 6px 18px rgba(42,35,55,.07);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15121C; --surface:#1E1A28; --surface-2:#2A2536; --line:#3A3347;
+  --ink:#F1EEF6; --muted:#B0A9BE;
+  --accent:#F59A4E; --accent-deep:#F8B57C; --accent-press:#B8611C; --accent-tint:#3A2A1E; --on-accent:#1C1726;
+  --success:#5CC48F; --warn:#E3B04B; --danger:#FF8A80; --info:#8DB4FF;
+  --stage:#0E0C13; --bezel:#000000; --scrim:rgba(0,0,0,.6);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#15121C; --surface:#1E1A28; --surface-2:#2A2536; --line:#3A3347;
+  --ink:#F1EEF6; --muted:#B0A9BE;
+  --accent:#F59A4E; --accent-deep:#F8B57C; --accent-press:#B8611C; --accent-tint:#3A2A1E; --on-accent:#1C1726;
+  --success:#5CC48F; --warn:#E3B04B; --danger:#FF8A80; --info:#8DB4FF;
+  --stage:#0E0C13; --bezel:#000000; --scrim:rgba(0,0,0,.6);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--font-ui);font-size:var(--fs-body);line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2.5px solid var(--accent-deep);outline-offset:2px}
+img{max-width:100%}
+
+/* ---------- press feedback ---------- */
+.rp{position:relative;overflow:hidden;isolation:isolate}
+.ripple{position:absolute;border-radius:50%;background:currentColor;opacity:.18;transform:scale(0);pointer-events:none;animation:ripple 550ms var(--ease) forwards;z-index:-1}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+.pop{animation:pop 420ms var(--spring)}
+@keyframes pop{0%{transform:scale(.86)}100%{transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.stagger>*{animation:rise var(--t-slow) var(--ease) both;animation-delay:calc(var(--i,0) * 35ms)}
+
+/* ---------- shell ---------- */
+.shell{min-height:100%;display:flex;gap:40px;justify-content:center;align-items:center;padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.rail{width:300px;flex:none;align-self:stretch;display:flex;flex-direction:column;gap:16px;background:var(--surface);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-1);max-height:calc(100dvh - 56px);overflow:auto;position:sticky;top:28px}
+.rail-top{display:flex;align-items:center;gap:10px}
+.rail-top img{width:40px;height:auto}
+.rail-top .wm{font-family:var(--font-display);font-weight:700;font-size:1.4rem;line-height:1.15}
+.rail-top small{display:block;color:var(--muted);font-size:var(--fs-xs)}
+.rail-top .grow{flex:1;min-width:0}
+.rail h2{margin:0 0 8px;font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rail .box{border-top:1px solid var(--line);padding-top:14px}
+.jump{display:flex;flex-direction:column;gap:2px}
+.jump .grp{font-size:var(--fs-xs);color:var(--muted);margin:8px 0 2px}
+.jump .grp:first-child{margin-top:0}
+.jump button{text-align:left;padding:7px 10px;border-radius:10px;font-size:var(--fs-sm);color:var(--muted);min-height:36px}
+.jump button:hover{background:var(--surface-2);color:var(--ink)}
+.jump button[aria-current="true"]{background:var(--surface-2);color:var(--ink);font-weight:600}
+.note-purpose{margin:0 0 8px;font-size:var(--fs-sm)}
+.note-rules{margin:0;padding-left:18px;font-size:var(--fs-sm);color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.rail-actions{display:flex;flex-direction:column;gap:8px}
+.rail.collapsed{width:64px;padding:12px;align-items:center}
+.rail.collapsed .rail-body,.rail.collapsed .rail-top .grow,.rail.collapsed .rail-top img{display:none}
+
+/* ---------- device ---------- */
+.device{position:relative;width:390px;max-width:100%;height:min(844px,calc(100dvh - 56px));min-height:640px;background:var(--bg);border:10px solid var(--bezel);border-radius:52px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(30,22,45,.22);flex:none}
+.statusbar{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:var(--fs-sm);font-weight:600}
+.statusbar svg{display:block;color:var(--ink)}
+.viewport{position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.viewport::-webkit-scrollbar{display:none}
+.viewport.fill{overflow:hidden}
+.screen{min-height:100%;padding:4px 20px 28px}
+.screen.enter{animation:rise var(--t-slow) var(--ease) both}
+.screen.chat{height:100%;padding:0;display:flex;flex-direction:column}
+
+.tabbar{flex:none;display:flex;justify-content:space-between;gap:4px;border-top:1px solid var(--line);background:var(--surface);padding:8px 10px 12px}
+.tab{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:48px;padding:0 14px;border-radius:var(--r-pill);color:var(--muted);transition:background var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.tab .lbl{display:none;font-weight:600;font-size:var(--fs-sm)}
+.tab[aria-current="page"]{background:var(--surface-2);color:var(--ink)}
+.tab[aria-current="page"] .lbl{display:inline}
+
+/* ---------- primitives ---------- */
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:20px;height:20px}
+.head{display:flex;align-items:center;justify-content:space-between;min-height:48px;gap:8px}
+.head-title{font-weight:600}
+.back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 12px 0 4px;border-radius:var(--r-pill);color:var(--ink);font-weight:600;font-size:var(--fs-sm)}
+.eyebrow{font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.title{font-family:var(--font-display);font-weight:700;font-size:var(--fs-title);line-height:1.15;letter-spacing:-.2px;margin:8px 0 6px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 20px}
+.muted{color:var(--muted)}
+.small{font-size:var(--fs-sm)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.icon-btn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--muted)}
+.avatar-btn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--surface-2);font-weight:600;color:var(--ink)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;padding:0 20px;border-radius:var(--r-pill);font-weight:600;font-size:1rem;transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
+.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-press)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--accent-press)}
+.btn-primary:disabled{opacity:.45;cursor:default;transform:none;box-shadow:0 3px 0 var(--accent-press)}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn-secondary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.btn-text{color:var(--ink);min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.link{display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);padding:0 2px}
+
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{min-height:44px;padding:10px 18px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--surface);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.pill.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pill.sm{min-height:40px;padding:6px 14px;font-size:var(--fs-sm)}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:var(--fs-sm);color:var(--muted);font-weight:600}
+.input{width:100%;min-height:48px;padding:12px 16px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--surface);font-size:1rem;transition:border-color var(--t-fast) var(--ease)}
+.input:focus{outline:none;border-color:var(--ink)}
+.input::placeholder{color:var(--muted);opacity:.8}
+textarea.input{min-height:84px;resize:none}
+.hint{font-size:var(--fs-xs);color:var(--muted);min-height:1.2em}
+.hint.err{color:var(--danger)}
+
+.card{background:var(--surface);border-radius:var(--r-md);padding:16px;box-shadow:var(--shadow-1)}
+.card-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left}
+.card-btn .grow{flex:1;min-width:0}
+
+/* confidence band + tooltip */
+.conf{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;position:relative}
+.band{display:flex;gap:3px}
+.band i{width:16px;height:5px;border-radius:3px;background:var(--line);transform-origin:left;overflow:hidden;position:relative}
+.band i.f::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;animation:fill var(--t-slow) var(--glide) forwards;animation-delay:calc(var(--n) * 90ms + 120ms)}
+@keyframes fill{to{transform:scaleX(1)}}
+.tip-btn{display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px -2px;border-radius:50%;color:var(--muted)}
+.tip-btn span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;font-size:11px;font-weight:600;line-height:1;text-transform:none}
+.tip{position:absolute;z-index:30;left:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 48px);background:var(--ink);color:var(--bg);border-radius:var(--r-sm);padding:12px 14px;font-size:var(--fs-sm);text-transform:none;letter-spacing:0;font-weight:400;line-height:1.45;animation:rise var(--t-med) var(--ease)}
+.tip b{font-weight:600}
+.tip p{margin:0}
+.tip p+p{margin-top:6px}
+
+/* ---------- onboarding ---------- */
+.ob-top{display:flex;justify-content:space-between;align-items:center;min-height:48px}
+.wordmark{font-family:var(--font-display);font-weight:700;font-size:1.3rem}
+.progress{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:3px;transform-origin:left;transform:scaleX(0);transition:transform var(--t-slow) var(--glide)}
+.step-of{font-size:var(--fs-xs);color:var(--muted);margin:0 0 16px}
+.screen.welcome{display:flex;flex-direction:column;gap:14px;padding-block:0 16px}
+.wel-top{display:flex;justify-content:center;min-height:30px;align-items:center}
+.wel-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.wel-blob{width:150px;height:150px;border-radius:50%;background:var(--accent-tint);display:grid;place-items:center}
+.wel-blob img{width:116px}
+.wel-title{font-size:1.6rem;margin:0;max-width:17ch}
+.wel-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wel-feats li{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border-radius:var(--r-md);padding:8px 12px;box-shadow:var(--shadow-1)}
+.fi{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--surface-2);color:var(--ink);flex:none}
+.ft{display:flex;flex-direction:column;min-width:0;font-size:var(--fs-sm);line-height:1.35}
+.ft b{font-weight:600;font-size:.95rem}
+.ft span{color:var(--muted)}
+.wel-actions{margin-top:auto;gap:10px}
+.wel-actions .btn-text{min-height:40px}
+.pw{position:relative}
+.pw .input{padding-right:76px}
+.pw-toggle{position:absolute;right:6px;top:6px;min-height:36px;padding:0 12px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm);color:var(--ink)}
+.form-err{font-size:var(--fs-sm);color:var(--danger);min-height:1.3em;margin:0}
+.or-row{text-align:center;font-size:var(--fs-sm);margin:0}
+.multi-note{font-size:var(--fs-sm);color:var(--muted);margin:-2px 0 14px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pill.custom{display:inline-flex;align-items:center;gap:6px}
+.pill.custom .ic{width:16px;height:16px}
+.own{display:flex;gap:8px;margin-top:12px}
+.own .input{flex:1;min-width:0;min-height:44px}
+.own .btn{width:auto;flex:none;min-height:44px;padding:0 18px}
+.q-block+.q-block{margin-top:22px}
+.q-block h3{margin:0 0 10px;font-size:1rem}
+.edit-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+.ob-cta{margin-top:24px}
+.ob-mascot{width:96px;margin:8px 0 0}
+
+/* ---------- home ---------- */
+.hello{display:flex;align-items:center;gap:14px;margin:4px 0 8px}
+.hello .title{margin:0;flex:1;min-width:0;font-size:1.65rem}
+.mascot{display:block;height:auto;user-select:none;-webkit-user-drag:none}
+.idle{animation:breathe 3.2s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-3px) scale(1.02,.98)}}
+.idle.pop,.mascot.pop{animation:pop 420ms var(--spring)}
+.today{margin:0 0 18px}
+.today-row{display:flex;gap:12px;align-items:center;font-size:var(--fs-sm);padding:8px 0;border-bottom:1px solid var(--line)}
+.today-row:last-child{border-bottom:none}
+.today-row time{color:var(--muted);width:68px;flex:none;font-variant-numeric:tabular-nums}
+.today-row .thumb{width:36px;height:36px;border-radius:10px;object-fit:cover;flex:none;background:var(--surface-2)}
+.today-row span{min-width:0}
+.empty{display:flex;align-items:center;gap:14px;background:var(--surface-2);border-radius:var(--r-md);padding:14px 16px;margin:0 0 18px}
+.empty img{width:56px;flex:none}
+.empty p{margin:0;font-size:var(--fs-sm)}
+.ins-card .obs{font-size:1.06rem;line-height:1.5;margin:10px 0 6px;font-weight:600}
+.ins-card .re{font-size:var(--fs-sm);color:var(--muted);margin:0 0 4px}
+.cta{display:flex;flex-direction:column;gap:12px;margin:20px 0 6px}
+.cta .helper{text-align:center;font-size:var(--fs-sm);color:var(--muted);margin:0}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 8px}
+.sec-head h2{margin:0;font-size:var(--fs-h2);font-family:var(--font-display);font-weight:600}
+.carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:4px 20px 10px;scrollbar-width:none}
+.carousel::-webkit-scrollbar{display:none}
+.carousel .idea{flex:0 0 72%;scroll-snap-align:start;background:var(--surface);border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--shadow-1);text-align:left}
+.idea h3{margin:0 0 2px;font-size:1rem}
+.idea .when{font-size:var(--fs-xs);color:var(--muted);text-transform:capitalize}
+.idea p{margin:8px 0 0;font-size:var(--fs-sm)}
+
+/* ---------- log meal ---------- */
+.viewfinder{position:relative;width:100%;aspect-ratio:4/5;max-height:50vh;border-radius:var(--r-lg);background:#1C1726;color:#F1EEF6;display:grid;place-items:center;overflow:hidden;margin-top:8px}
+.viewfinder video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vf-msg{position:relative;text-align:center;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:var(--fs-sm);max-width:260px}
+.vf-msg strong{font-size:1rem}
+.viewfinder .c{position:absolute;width:30px;height:30px;border-color:rgba(255,255,255,.75);border-style:solid;border-width:0;z-index:1}
+.c1{top:16px;left:16px;border-top-width:3px!important;border-left-width:3px!important;border-top-left-radius:10px}
+.c2{top:16px;right:16px;border-top-width:3px!important;border-right-width:3px!important;border-top-right-radius:10px}
+.c3{bottom:16px;left:16px;border-bottom-width:3px!important;border-left-width:3px!important;border-bottom-left-radius:10px}
+.c4{bottom:16px;right:16px;border-bottom-width:3px!important;border-right-width:3px!important;border-bottom-right-radius:10px}
+.live{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:1;background:rgba(0,0,0,.45);color:#fff;font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:4px 10px}
+.shutter-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:18px}
+.shutter{width:76px;height:76px;border-radius:50%;background:var(--accent);border:5px solid var(--bg);box-shadow:0 0 0 2px var(--accent),0 4px 0 2px var(--accent-press);transition:transform var(--t-fast) var(--ease)}
+.shutter:active{transform:translateY(2px) scale(.96)}
+.side-act{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--ink);font-weight:600;min-height:56px;justify-content:center;border-radius:var(--r-sm);cursor:pointer;padding:4px}
+.side-act input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.side-act:focus-within{outline:2.5px solid var(--accent-deep)}
+.shot{width:100%;aspect-ratio:4/3;border-radius:var(--r-md);background:var(--surface-2);display:grid;place-items:center;overflow:hidden;margin:8px 0 16px}
+.shot img{width:100%;height:100%;object-fit:cover}
+.shot .ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:var(--fs-sm)}
+.ai-line{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--muted);min-height:1.4em}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:breathe-o 1.2s ease-in-out infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes breathe-o{0%,100%{opacity:.25}50%{opacity:1}}
+.note-chips{display:flex;flex-wrap:wrap;gap:6px}
+.saved{position:absolute;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;animation:fade var(--t-med) var(--ease)}
+.saved img{width:140px}
+.saved p{margin:0;font-family:var(--font-display);font-size:1.4rem;font-weight:600}
+
+/* ---------- check-in ---------- */
+.moods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mood{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 10px;border-radius:var(--r-md);background:var(--surface);border:2px solid transparent;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.mood img{width:62px;height:56px;object-fit:contain}
+.mood span{font-size:var(--fs-sm);font-weight:600;text-align:center;line-height:1.2}
+.mood[aria-pressed="true"]{border-color:var(--ink);background:var(--surface-2)}
+.mood:active{transform:scale(.97)}
+
+/* ---------- insights ---------- */
+.evidence{font-size:var(--fs-sm);color:var(--muted);margin:-8px 0 18px}
+.evidence b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.ins{background:var(--surface);border-radius:var(--r-md);padding:16px 16px 10px;box-shadow:var(--shadow-1);transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
+.ins.out{opacity:0;transform:translateX(-12px)}
+.ins-top{display:flex;justify-content:space-between;align-items:center;margin:-8px -10px 0 0}
+.ins .obs{font-size:1.06rem;font-weight:600;line-height:1.5;margin:6px 0 4px}
+.ins .re{font-size:var(--fs-sm);color:var(--muted);margin:0 0 2px}
+.why{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;animation:fade var(--t-med) var(--ease)}
+.why ul{margin:6px 0 4px;padding-left:18px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:4px}
+.skel{border-radius:var(--r-md);background:var(--surface-2);height:132px;animation:breathe-o 1.4s ease-in-out infinite}
+.quiet{border:1.5px dashed var(--line);border-radius:var(--r-md);padding:14px 16px;font-size:var(--fs-sm);color:var(--muted)}
+
+/* ---------- meals ---------- */
+.filters{display:flex;gap:8px;overflow-x:auto;margin:0 -20px 14px;padding:0 20px 2px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters .pill{flex:none}
+.meal{background:var(--surface);border-radius:var(--r-md);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow-1)}
+.meal .grow{flex:1;min-width:0}
+.meal h3{margin:0;font-size:1.06rem}
+.meal .when{font-size:var(--fs-xs);color:var(--muted);text-transform:capitalize}
+.meal p{margin:6px 0 0;font-size:var(--fs-sm)}
+.meal .icon-btn{margin:-10px -10px 0 0}
+.meal .icon-btn[aria-pressed="true"]{color:var(--ink)}
+.meal .icon-btn[aria-pressed="true"] .ic{fill:currentColor}
+.meal.low{background:transparent;box-shadow:none;border:1.5px solid var(--line)}
+.sec-label{font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:24px 0 10px}
+
+/* ---------- chat ---------- */
+.chat-head{flex:none;display:flex;align-items:center;gap:12px;padding:4px 20px 12px;border-bottom:1px solid var(--line)}
+.chat-head img{width:44px}
+.chat-head .grow{flex:1;min-width:0}
+.chat-head .name{font-weight:600;font-size:1.06rem;line-height:1.2}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--muted);font-weight:600}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.ai i{background:var(--success)}
+.status.off i{background:var(--warn)}
+.chat-body{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none}
+.chat-body::-webkit-scrollbar{display:none}
+.chat-empty{text-align:center;display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.chat-empty img{width:110px}
+.chat-empty h2{font-family:var(--font-display);font-size:1.4rem;font-weight:600;margin:8px 0 4px;line-height:1.15}
+.chat-empty p{margin:0 0 16px;color:var(--muted);font-size:var(--fs-sm);max-width:32ch}
+.starters{display:flex;flex-direction:column;gap:8px;width:100%}
+.starter{width:100%;text-align:left;background:var(--surface);border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--shadow-1);min-height:48px}
+.msg{display:flex;gap:8px;align-items:flex-end;animation:rise var(--t-med) var(--ease) both}
+.msg .bubble{max-width:84%;padding:12px 14px;border-radius:18px;line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.msg.guti .bubble{background:var(--surface);border-bottom-left-radius:6px;box-shadow:var(--shadow-1)}
+.msg.me{justify-content:flex-end}
+.msg.me .bubble{background:var(--ink);color:var(--bg);border-bottom-right-radius:6px}
+.msg .av{width:30px;flex:none}
+.bubble p{margin:0}
+.bubble p+p,.bubble ul+p,.bubble p+ul{margin-top:8px}
+.bubble ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.bubble .meta{font-size:var(--fs-xs);color:var(--muted);margin-top:8px}
+.bubble.safety{border:1.5px solid var(--danger)}
+.qr{flex:none;display:flex;gap:8px;overflow-x:auto;padding:6px 20px 6px;scrollbar-width:none}
+.qr::-webkit-scrollbar{display:none}
+.qr .pill{flex:none;min-height:40px;padding:6px 16px;font-size:var(--fs-sm)}
+.composer{flex:none;display:flex;gap:8px;align-items:flex-end;padding:8px 16px 12px;border-top:1px solid var(--line);background:var(--bg)}
+.composer textarea{flex:1;min-height:44px;max-height:120px;padding:11px 16px;border-radius:22px;border:1.5px solid var(--line);background:var(--surface);resize:none;line-height:1.4;font-size:1rem}
+.composer textarea:focus{outline:none;border-color:var(--ink)}
+.send{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--on-accent);flex:none;box-shadow:0 3px 0 var(--accent-press);transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.send:active{transform:translateY(2px);box-shadow:0 1px 0 var(--accent-press)}
+.send.stop{background:var(--surface-2);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+
+/* ---------- profile ---------- */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface-2);border-radius:var(--r-pill);padding:4px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm);color:var(--muted);transition:background var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.seg button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1)}
+.prof-top{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 20px}
+.prof-av{width:72px;height:72px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:1.6rem;font-family:var(--font-display);font-weight:700;margin-bottom:6px}
+.prof-top .nm{font-size:var(--fs-h2);font-weight:600}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{background:var(--surface);border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;font-size:var(--fs-sm);box-shadow:var(--shadow-1)}
+.row span:first-child{color:var(--muted);flex:none}
+.row span:last-child{text-align:right;min-width:0}
+.log-row{display:flex;gap:12px;align-items:center;background:var(--surface);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow-1);font-size:var(--fs-sm)}
+.log-row .thumb{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--surface-2);flex:none;display:grid;place-items:center;color:var(--muted)}
+.log-row .grow{flex:1;min-width:0}
+.log-row time{color:var(--muted);font-size:var(--fs-xs);display:block}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{background:var(--surface-2);border-radius:10px;padding:4px 10px;font-size:var(--fs-sm)}
+.plus{border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-top:22px}
+.plus h3{margin:0 0 4px;font-family:var(--font-display);font-size:1.2rem;font-weight:600}
+.plus p{margin:0 0 14px;font-size:var(--fs-sm);color:var(--muted)}
+.privacy{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-sm);color:var(--muted);margin:18px 0 0}
+
+/* ---------- sheet + toast ---------- */
+.scrim{position:absolute;inset:0;z-index:40;background:var(--scrim);animation:fade var(--t-med) var(--ease)}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:10px 20px 24px;animation:sheet-in var(--t-med) var(--glide);max-height:85%;overflow:auto}
+@keyframes sheet-in{from{transform:translateY(100%)}to{transform:none}}
+.grabber{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+.sheet h2{font-family:var(--font-display);font-size:1.4rem;margin:0 0 6px;line-height:1.15}
+.sheet ul{padding-left:18px;margin:8px 0 18px;display:flex;flex-direction:column;gap:6px}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;z-index:50;background:var(--ink);color:var(--bg);border-radius:var(--r-sm);padding:12px 14px;font-size:var(--fs-sm);display:flex;justify-content:space-between;align-items:center;gap:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast.low{bottom:20px}
+.toast button{font-weight:600;text-decoration:underline;text-underline-offset:3px;min-height:36px;padding:0 6px;color:inherit}
+
+/* ---------- panels (style guide, build notes) ---------- */
+.panel{position:fixed;inset:0;z-index:100;background:var(--bg);overflow:auto;animation:fade var(--t-med) var(--ease)}
+.panel-in{max-width:1080px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2}
+.panel h1{font-family:var(--font-display);font-size:clamp(1.8rem,1.3rem + 2vw,2.6rem);line-height:1.15;margin:8px 0 4px}
+.panel h2{font-family:var(--font-display);font-size:1.4rem;margin:28px 0 10px;line-height:1.15}
+.panel p.lead{color:var(--muted);margin:0 0 8px;max-width:65ch}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.swatch{background:var(--surface);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-1)}
+.swatch .chip{height:64px;border-bottom:1px solid var(--line)}
+.swatch .body{padding:10px 12px;font-size:var(--fs-sm)}
+.swatch code{font-size:var(--fs-xs);color:var(--muted)}
+.ratio{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:2px 8px;border:1.5px solid var(--line);font-variant-numeric:tabular-nums}
+.badge.pass{color:var(--success);border-color:currentColor}
+.badge.fail{color:var(--danger);border-color:currentColor}
+.split{display:flex;height:40px;border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--shadow-1);margin:6px 0}
+.split div{display:grid;place-items:center;font-size:var(--fs-xs);font-weight:600}
+.tbl{overflow-x:auto;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow-1)}
+table{border-collapse:collapse;width:100%;font-size:var(--fs-sm);min-width:640px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:none}
+.st{font-weight:600}
+.st.ok{color:var(--success)}.st.warn{color:var(--warn)}.st.bad{color:var(--danger)}
+.demo-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.demo-row .btn{width:auto}
+.motion-dot{width:44px;height:44px;border-radius:50%;background:var(--accent)}
+.checklist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border-radius:12px;padding:10px 12px;font-size:var(--fs-sm);box-shadow:var(--shadow-1);cursor:pointer}
+.checklist input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent-press);flex:none}
+.type-spec{display:flex;flex-direction:column;gap:10px;background:var(--surface);border-radius:var(--r-md);padding:16px;box-shadow:var(--shadow-1)}
+.mascots{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.mascots figure{margin:0;background:var(--surface);border-radius:var(--r-md);padding:10px;text-align:center;box-shadow:var(--shadow-1);font-size:var(--fs-sm)}
+.mascots img{width:80px;height:72px;object-fit:contain}
+
+/* ---------- responsive ---------- */
+@media (max-width:1023px){
+  .shell{flex-direction:column-reverse;align-items:center;gap:24px}
+  .rail{width:100%;max-width:430px;position:static;max-height:none;align-self:center}
+  .rail.collapsed{width:100%;align-items:stretch}
+  .rail.collapsed .rail-top img,.rail.collapsed .rail-top .grow{display:block}
+}
+@media (max-width:520px){
+  .shell{padding:0;gap:0}
+  .device{width:100%;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:560px;border:0;border-radius:0;box-shadow:none}
+  .statusbar{display:none}
+  .screen{padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+  .screen.chat{padding:0}
+  .rail{border-radius:0;box-shadow:none;margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:1ms!important}
+  .band i.f::after{transform:none}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0zM9 8c0-1.3 1-1.7 1-3M13.5 8c0-1.3 1-1.7 1-3"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-6.5L8 20.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.6L7 20z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 16l5-4.5 4 3.5 3-2.5 5 4"/><circle cx="15.5" cy="9.5" r="1.5"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 4h9l4 4v12H6z"/><path d="M9 12h7M9 16h5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-system" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/></symbol>
+  <symbol id="i-mood" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9 14.5c1.6 1.6 4.4 1.6 6 0"/><path d="M9.2 10h.01M14.8 10h.01" stroke-width="2.4"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 4.5v15"/></symbol>
+</svg>
+
+<div class="shell">
+  <aside class="rail" id="rail" aria-label="Prototype controls">
+    <div class="rail-top">
+      <div class="grow"><div class="wm">Gutly</div><small>Prototype v4 · tap through or jump</small></div>
+      <button class="icon-btn" id="rail-toggle" aria-expanded="true" aria-label="Collapse panel" title="Collapse panel"><svg class="ic"><use href="#i-panel"/></svg></button>
+    </div>
+    <div class="rail-body stack" style="gap:16px">
+      <div class="rail-actions">
+        <button class="btn btn-secondary" id="open-guide">Style guide</button>
+        <button class="btn btn-secondary" id="open-notes">Audit &amp; build notes</button>
+      </div>
+      <section class="box">
+        <h2>On this screen</h2>
+        <p class="note-purpose" id="note-purpose"></p>
+        <ul class="note-rules" id="note-rules"></ul>
+      </section>
+      <section class="box">
+        <h2>Jump to a screen</h2>
+        <nav class="jump" id="jump"></nav>
+      </section>
+      <button class="btn-text" id="reset" style="align-self:flex-start">Reset demo and restart onboarding</button>
+    </div>
+  </aside>
+
+  <div class="device" id="device">
+    <div class="statusbar" aria-hidden="true">
+      <span id="clock">9:41</span>
+      <svg width="54" height="12" viewBox="0 0 54 12"><g fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/></g><rect x="26.5" y="1" width="22" height="10" rx="3" fill="none" stroke="currentColor"/><rect x="28.5" y="3" width="15" height="6" rx="1.5" fill="currentColor"/><rect x="50" y="4" width="2" height="4" rx="1" fill="currentColor"/></svg>
+    </div>
+    <div class="viewport" id="viewport">
+
+      <!-- ONBOARDING (questions built from QS) -->
+      <section class="screen" id="onboard" data-screen hidden aria-live="polite"></section>
+
+      <!-- WELCOME -->
+      <section class="screen welcome" id="welcome" data-screen hidden aria-label="Welcome">
+        <div class="wel-top"><span class="wordmark">Gutly</span></div>
+        <div class="wel-hero">
+          <div class="wel-blob"><img class="mascot idle" id="wel-mascot" alt=""></div>
+          <h1 class="title wel-title">Understand your gut, one meal at a time.</h1>
+        </div>
+        <ul class="wel-feats"><li><span class="fi"><svg class="ic sm"><use href="#i-camera"/></svg></span><span class="ft"><b>Snap or jot a meal</b><span>A photo before you eat or a note after. No calories, no scores.</span></span></li><li><span class="fi"><svg class="ic sm"><use href="#i-bulb"/></svg></span><span class="ft"><b>One insight a day</b><span>Patterns from your own plates, with the reason each one showed up.</span></span></li><li><span class="fi"><svg class="ic sm"><use href="#i-chat"/></svg></span><span class="ft"><b>Chat with Gutly</b><span>Ask about any pattern. Gutly never diagnoses or bans foods.</span></span></li></ul>
+        <div class="stack wel-actions">
+          <button class="btn btn-primary rp" data-go="signup">Create account</button>
+          <button class="btn btn-secondary rp" data-go="login">Log in</button>
+          <button class="btn-text rp" id="guest" style="align-self:center">Explore without an account</button>
+        </div>
+      </section>
+
+      <!-- SIGN UP -->
+      <section class="screen" id="signup" data-screen hidden aria-label="Create account">
+        <div class="ob-top"><button class="back rp" data-go="welcome"><svg class="ic sm"><use href="#i-back"/></svg>Back</button><span class="wordmark">Gutly</span></div>
+        <div class="progress" aria-hidden="true"><i id="su-bar" style="transform:scaleX(0)"></i></div>
+        <p class="step-of">Step 1 of 5</p>
+        <h1 class="title">Create your account</h1>
+        <p class="sub">Your meals and insights stay with you, on any device.</p>
+        <form id="signup-form" class="stack" novalidate>
+          <div class="field"><label for="su-name">Your name</label><input class="input" id="su-name" autocomplete="name" placeholder="Arjun Kapoor"><span class="hint" id="su-name-hint"></span></div>
+          <div class="field"><label for="su-email">Email</label><input class="input" id="su-email" type="email" autocomplete="email" placeholder="arjun@example.com"><span class="hint" id="su-email-hint"></span></div>
+          <div class="field"><label for="su-pass">Password</label><div class="pw"><input class="input" id="su-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters"><button type="button" class="pw-toggle rp" data-pw="su-pass" aria-pressed="false" aria-label="Show password">Show</button></div><span class="hint" id="su-pass-hint"></span></div>
+          <p class="small muted" style="margin:0">Meal photos are never shared, never used for ads, and never sold.</p>
+          <button class="btn btn-primary rp" type="submit">Create account</button>
+          <p class="or-row">Already have an account? <button type="button" class="link rp" data-go="login">Log in</button></p>
+        </form>
+      </section>
+
+      <!-- LOG IN -->
+      <section class="screen" id="login" data-screen hidden aria-label="Log in">
+        <div class="ob-top"><button class="back rp" data-go="welcome"><svg class="ic sm"><use href="#i-back"/></svg>Back</button><span class="wordmark">Gutly</span></div>
+        <h1 class="title" style="margin-top:20px">Welcome back</h1>
+        <p class="sub">Log in to pick up where you left off.</p>
+        <form id="login-form" class="stack" novalidate>
+          <div class="field"><label for="li-email">Email</label><input class="input" id="li-email" type="email" autocomplete="email" placeholder="arjun@example.com"></div>
+          <div class="field"><label for="li-pass">Password</label><div class="pw"><input class="input" id="li-pass" type="password" autocomplete="current-password" placeholder="Your password"><button type="button" class="pw-toggle rp" data-pw="li-pass" aria-pressed="false" aria-label="Show password">Show</button></div></div>
+          <p class="form-err" id="li-err" role="alert"></p>
+          <button class="btn btn-primary rp" type="submit">Log in</button>
+          <button type="button" class="btn-text rp" id="forgot" style="align-self:center">Forgot password?</button>
+          <p class="or-row">New to Gutly? <button type="button" class="link rp" data-go="signup">Create an account</button></p>
+        </form>
+      </section>
+
+      <!-- HOME -->
+      <section class="screen" id="home" data-screen hidden aria-label="Today">
+        <div class="head">
+          <span class="eyebrow" id="home-date"></span>
+          <button class="icon-btn rp" id="theme-quick" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="ic sm"><use href="#i-moon"/></svg></button>
+        </div>
+        <div class="hello">
+          <h1 class="title" id="home-title">How's your gut today?</h1>
+          <img class="mascot idle" id="home-mascot" width="68" alt="">
+        </div>
+        <div id="home-context"></div>
+        <div id="home-insight"></div>
+        <div class="cta">
+          <button class="btn btn-primary rp" data-go="log"><svg class="ic sm"><use href="#i-camera"/></svg>Log meal</button>
+          <button class="btn btn-secondary rp" data-go="checkin" id="home-checkin-btn">Check in</button>
+        </div>
+        <div class="sec-head"><h2>Felt easier before</h2><button class="link rp" data-go="meals">See all</button></div>
+        <div class="carousel stagger" id="home-ideas" aria-label="Meal ideas"></div>
+      </section>
+
+      <!-- LOG MEAL -->
+      <section class="screen" id="log" data-screen hidden aria-label="Log meal">
+        <div class="head"><button class="back rp" data-go="home"><svg class="ic sm"><use href="#i-back"/></svg>Today</button><span class="head-title">Log meal</span><span style="width:72px"></span></div>
+        <div id="cam">
+          <div class="viewfinder" id="viewfinder">
+            <video id="video" playsinline muted hidden></video>
+            <span class="live" id="live-badge" hidden>Camera on</span>
+            <i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i>
+            <div class="vf-msg" id="vf-msg">
+              <svg class="ic" style="width:40px;height:40px"><use href="#i-camera"/></svg>
+              <strong>Snap your meal</strong>
+              <span id="vf-hint">Tap the shutter to open your camera.</span>
+            </div>
+          </div>
+          <div class="shutter-row">
+            <label class="side-act rp"><svg class="ic"><use href="#i-image"/></svg>Gallery<input type="file" id="gal-input" accept="image/*"></label>
+            <button class="shutter rp" id="shutter" aria-label="Take photo"></button>
+            <button class="side-act rp" id="no-photo"><svg class="ic"><use href="#i-note"/></svg>Just a note</button>
+          </div>
+          <input type="file" id="cam-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+          <p class="small muted" style="text-align:center;margin:14px 0 0">Ate already? Use <b>Just a note</b>. A quick note after the meal works too.</p>
+        </div>
+        <div id="captured" hidden>
+          <div class="shot" id="shot"></div>
+          <div class="stack">
+            <div class="field">
+              <label for="meal-name">What was it?</label>
+              <input class="input" id="meal-name" placeholder="e.g. dal-chawal with salad">
+              <span class="ai-line" id="ai-line"></span>
+            </div>
+            <div class="field">
+              <label for="meal-note">Add a note (optional)</label>
+              <textarea class="input" id="meal-note" placeholder="Ate in a hurry, extra spicy…"></textarea>
+              <div class="note-chips" id="note-chips"></div>
+            </div>
+            <button class="btn btn-primary rp" id="save-meal">Save</button>
+            <button class="btn-text rp" id="retake" style="align-self:center">Retake</button>
+          </div>
+        </div>
+        <div class="saved" id="saved" hidden role="status">
+          <img class="mascot" alt="" id="saved-mascot">
+          <p>Saved — we'll keep this in mind.</p>
+          <span class="small muted">Back to Today in a moment</span>
+        </div>
+      </section>
+
+      <!-- CHECK-IN -->
+      <section class="screen" id="checkin" data-screen hidden aria-label="Check-in">
+        <div class="head"><button class="back rp" data-go="home"><svg class="ic sm"><use href="#i-back"/></svg>Today</button><span class="head-title">Check-in</span><span style="width:72px"></span></div>
+        <h1 class="title">Anything worth noting?</h1>
+        <p class="sub">Pick up to two feelings.</p>
+        <p class="eyebrow" style="margin:0 0 10px">How you feel</p>
+        <div class="moods" id="ci-mood"></div>
+        <p class="eyebrow" style="margin:22px 0 10px">How your gut feels</p>
+        <div class="pills" id="ci-gut"></div>
+        <div style="height:24px"></div>
+        <div class="stack">
+          <button class="btn btn-primary rp" id="save-ci" disabled>Save check-in</button>
+          <button class="btn-text rp" id="skip-ci" style="align-self:center">Skip for now</button>
+        </div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section class="screen" id="insights" data-screen hidden aria-label="Insights">
+        <h1 class="title" style="margin-top:16px">What we're noticing</h1>
+        <div style="height:12px"></div>
+        <p class="evidence" id="evidence"></p>
+        <div class="stack" id="ins-list"></div>
+      </section>
+
+      <!-- MEALS -->
+      <section class="screen" id="meals" data-screen hidden aria-label="Meal ideas">
+        <h1 class="title" style="margin-top:16px">Meals that felt easier</h1>
+        <div style="height:12px"></div>
+        <div class="filters" id="meal-filters" role="group" aria-label="Filter by meal time"></div>
+        <div class="stack" id="meal-list"></div>
+        <p class="sec-label">Less sure about these</p>
+        <div class="stack" id="meal-low"></div>
+      </section>
+
+      <!-- CHAT -->
+      <section class="screen chat" id="chat" data-screen hidden aria-label="Chat with Gutly">
+        <div class="chat-head">
+          <img class="mascot idle" id="chat-mascot" alt="">
+          <div class="grow"><div class="name">Gutly</div><span class="status" id="ai-status"><i></i><span>Checking…</span></span></div>
+          <button class="icon-btn rp" id="chat-clear" aria-label="Start a new chat" title="Start a new chat"><svg class="ic sm"><use href="#i-close"/></svg></button>
+        </div>
+        <div class="chat-body" id="chat-body" aria-live="polite"></div>
+        <div class="qr" id="qr" hidden></div>
+        <form class="composer" id="composer">
+          <label for="chat-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message Gutly</label>
+          <textarea id="chat-input" rows="1" placeholder="Tell Gutly what's going on…"></textarea>
+          <button class="send rp" id="send" type="submit" aria-label="Send"><svg class="ic sm"><use href="#i-send"/></svg></button>
+        </form>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="screen" id="profile" data-screen hidden aria-label="Profile">
+        <h1 class="title" style="margin-top:16px">Profile</h1>
+        <div class="prof-top"><div class="prof-av" id="prof-av">A</div><div class="nm" id="prof-name"></div><div class="small muted" id="prof-meta"></div></div>
+        <p class="eyebrow" style="margin:0 0 10px">Appearance</p>
+        <div class="seg" role="radiogroup" aria-label="Appearance" id="theme-seg">
+          <button class="rp" role="radio" data-theme-opt="system" aria-checked="true"><svg class="ic sm"><use href="#i-system"/></svg>System</button>
+          <button class="rp" role="radio" data-theme-opt="light" aria-checked="false"><svg class="ic sm"><use href="#i-sun"/></svg>Light</button>
+          <button class="rp" role="radio" data-theme-opt="dark" aria-checked="false"><svg class="ic sm"><use href="#i-moon"/></svg>Dark</button>
+        </div>
+        <p class="eyebrow" style="margin:22px 0 10px">Your log</p>
+        <div class="stack" id="prof-log" style="gap:8px"></div>
+        <div class="edit-head" style="margin:14px 0 2px"><p class="eyebrow" style="margin:0">What you told us</p><button class="link rp" id="edit-answers">Edit</button></div>
+        <div class="rows" id="prof-answers"></div>
+        <p class="eyebrow" style="margin:22px 0 10px">Food preferences</p>
+        <div class="card"><div class="small muted">Keeps meal ideas familiar</div><div class="tags"><span class="tag">Vegetarian</span><span class="tag">North Indian home food</span><span class="tag">Low spice</span></div></div>
+        <div class="plus"><h3>Gutly Plus</h3><p>Longer memory, a weekly reflection and a report to share with your doctor. Everything you use today stays free.</p><button class="btn btn-secondary rp" id="plus-btn">See what's in Plus</button></div>
+        <div class="privacy"><svg class="ic sm"><use href="#i-lock"/></svg><span>Meal photos are processed only to find your patterns. Never shared, never used for ads, never sold.</span></div>
+        <button class="btn-text rp" id="signout" style="display:block;margin:16px auto 0">Sign out</button>
+      </section>
+    </div>
+
+    <nav class="tabbar" id="tabbar" aria-label="Main">
+      <button class="tab rp" data-tab="home" aria-label="Today"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">Today</span></button>
+      <button class="tab rp" data-tab="insights" aria-label="Insights"><svg class="ic"><use href="#i-bulb"/></svg><span class="lbl">Insights</span></button>
+      <button class="tab rp" data-tab="meals" aria-label="Meals"><svg class="ic"><use href="#i-bowl"/></svg><span class="lbl">Meals</span></button>
+      <button class="tab rp" data-tab="chat" aria-label="Chat"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">Chat</span></button>
+      <button class="tab rp" data-tab="profile" aria-label="Profile"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">Profile</span></button>
+    </nav>
+    <div id="layer"></div>
+    <div class="toast" id="toast" role="status"><span id="toast-msg"></span><button id="toast-act" hidden></button></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-guide" hidden role="dialog" aria-modal="true" aria-label="Style guide"><div class="panel-in" id="guide-in"></div></div>
+<div class="panel" id="panel-notes" hidden role="dialog" aria-modal="true" aria-label="Audit and build notes"><div class="panel-in" id="notes-in"></div></div>
+
+<script>
+(function(){
+'use strict';
+const MASCOT = /*MASCOTS*/{};
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = d => new Date(d).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).replace(' ', ' ');
+const dayKey = d => new Date(d).toDateString();
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= haptics + ripple (A5) ================= */
+const buzz = ms => { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(_){} };
+const PRIMARY = '.btn-primary,.shutter,.send,.mood';
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest('button,.rp,label.side-act');
+  if(!el || el.disabled) return;
+  buzz(el.matches(PRIMARY) ? 8 : 4);
+  if(reduced() || !el.classList.contains('rp')) return;
+  const r = el.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+  const s = document.createElement('span'); s.className = 'ripple';
+  s.style.width = s.style.height = size + 'px';
+  s.style.left = (e.clientX - r.left - size/2) + 'px'; s.style.top = (e.clientY - r.top - size/2) + 'px';
+  el.append(s); s.addEventListener('animationend', () => s.remove());
+}, {passive:true});
+function celebrate(el){ buzz(16); if(!el) return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+function countUp(el, to){
+  if(reduced()){ el.textContent = to; return; }
+  const t0 = performance.now(), dur = 650;
+  const step = t => { const p = Math.min(1, (t - t0)/dur); el.textContent = Math.round(to * (1 - Math.pow(1-p, 3))); if(p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ================= content ================= */
+const QS = [
+  {q:'What usually brings you here?', opts:['Bloating after meals','Gas and discomfort','IBS-like symptoms','Not sure what to eat','Understanding patterns','Wanting to trust my gut']},
+  {q:'When does your gut feel off?', opts:['Right after eating','A few hours later','With certain foods',"When I'm stressed",'It feels random',"I'm not sure"]},
+  {q:'What do you want help with most?', opts:['Understanding what affects me','Eating with confidence','Less guessing and restricting','Gentle meal ideas','Seeing patterns','Someone to talk it through with']},
+  {q:'How would you like support?', opts:['A daily insight','Meal ideas','Someone to talk to','Just the patterns','A bit of everything']},
+];
+const LEVELS = {1:'Early signal',2:'Emerging pattern',3:'Consistent observation'};
+const INSIGHTS = [
+  {id:'chai', level:2, obs:'Mornings with chai and poha seemed calmer this week.', re:"Patterns can shift — that's normal.",
+   why:['You logged chai with poha on 4 mornings.','On 3 of them, your check-in within two hours was "calm" or "settled".','The fourth followed a late night, which may explain the difference.'], ask:'Why did the chai and poha pattern show up?'},
+  {id:'rajma', level:1, obs:'Rajma lunches might be linked to heavier afternoons.', re:'Still early. It may be about pace as much as food.',
+   why:['Rajma-chawal was lunch on Tuesday and Thursday.','Both afternoons you checked in as "bloated" around 4 pm.','Both days you also noted feeling rushed, so this is not being read as a food effect yet.'], ask:'Why did the rajma insight show up?'},
+  {id:'roti', level:2, obs:'Rotis with dal seemed easier than rotis with paneer this week.', re:"Two paneer meals isn't much to go on. This could change.",
+   why:['Dal with phulka: 3 dinners, each followed by a "settled" morning.','Paneer with roti: 2 dinners, one followed by a "heavy" morning.'], ask:'Tell me about dal and paneer'},
+  {id:'warm', level:3, obs:'Warm, simple dinners have felt easy for three weeks.', re:"This one has held steady. It can still change, and that's fine.",
+   why:['Khichdi, dal-rice and curd rice: 9 dinners over three weeks.','8 of those were followed by a "settled" or "light" morning check-in.'], ask:'What do you see in my dinners?'},
+];
+const SEED_WEEK = {meals:18, checkins:9, days:7};
+const MEALS = [
+  {id:'khichdi', name:'Moong dal khichdi', when:['dinner','lunch'], why:'Logged 4 times. Each next morning you checked in "settled".', level:3},
+  {id:'poha', name:'Poha with peanuts', when:['breakfast'], why:'Your calmer mornings often started with this.', level:2},
+  {id:'dal', name:'Dal with phulka', when:['lunch','dinner'], why:'Felt easier than roti with paneer this week.', level:2},
+  {id:'curd', name:'Curd rice', when:['lunch','dinner'], why:'Shows up on light, settled evenings.', level:2},
+  {id:'idli', name:'Idli with sambar', when:['breakfast'], why:'Logged twice, both followed by "calm".', level:1},
+];
+const MEALS_LOW = [
+  {id:'upma', name:'Vegetable upma', when:['breakfast'], why:'Only logged once so far.'},
+  {id:'jeera', name:'Jeera rice with dal tadka', when:['lunch','dinner'], why:'Mixed check-ins after this. Too early to say.'},
+];
+const MOODS = [{k:'calm',l:'Calm'},{k:'happy',l:'Good'},{k:'tired',l:'Tired'},{k:'anxious',l:'Anxious'},{k:'stressed',l:'Stressed or rushed'},{k:'sad',l:'Low'}];
+const GUTS = ['Settled','Light','Heavy','Bloated','Gassy'];
+const NOTE_CHIPS = ['Ate in a hurry','Extra spicy','Office canteen','Ordered in','Ate late'];
+
+const SCREENS = {
+  welcome:{label:'Welcome', group:'Onboarding', purpose:'First screen: what Gutly is and two clear ways in.', rules:['Create account is the one filled button','Log in for returning users','Explore without an account for a quick look']},
+  signup:{label:'Sign up', group:'Onboarding', purpose:'Create an account in one short form.', rules:['Name, email and password, checked inline','Show/hide password','Step 1 of 5 on the progress bar','Link across to Log in']},
+  login:{label:'Log in', group:'Onboarding', purpose:'Returning users get straight back to Today.', rules:['Inline error for unknown email or wrong password','Show/hide password; Forgot password','Skips the setup questions if already answered']},
+  'ob-1':{label:'Q1 · What brings you here', group:'Onboarding'}, 'ob-2':{label:'Q2 · When it feels off', group:'Onboarding'},
+  'ob-3':{label:'Q3 · Help wanted', group:'Onboarding'}, 'ob-4':{label:'Q4 · Support style', group:'Onboarding'},
+  home:{label:'Today', group:'App', tab:'home', purpose:'What is this? What can I do? What happens next? Answered in one screen.', rules:['Sun/moon button switches light and dark','Guti appears once per screen; here he mirrors your last check-in','Exactly one insight, with a tooltip on its confidence','Log meal is the only accent-coloured action','Peeking carousel of meal ideas']},
+  log:{label:'Log meal', group:'App', back:'home', purpose:'Capture meals with zero friction: photo now, or a note after.', rules:['Camera opens as soon as you arrive: live viewfinder where the browser allows it, else the phone camera app','Gallery and "Just a note" for after the meal','AI names the dish from the photo; you can edit it','No calories, macros or scores']},
+  checkin:{label:'Check-in', group:'App', back:'home', purpose:'Emotional context without pressure.', rules:['Mascot faces, no intensity scale (PRD rule)','Up to two feelings, all optional','Skipping twice makes the prompt quieter']},
+  insights:{label:'Insights', group:'App', tab:'insights', purpose:'Turn activity into understanding.', rules:['Loading, empty and dismissed states','Evidence numbers count up; confidence bands fill','Tooltip explains Early / Emerging / Consistent','Dismiss with undo; ask Gutly about any card']},
+  meals:{label:'Meal ideas', group:'App', tab:'meals', purpose:'Support food decisions gently.', rules:['Suggestions, never a plan','Empty state per filter','Save for later persists on this device']},
+  chat:{label:'Gutly chat', group:'App', tab:'chat', purpose:'A companion that listens and explains.', rules:['Live AI when the viewer allows it, labelled "AI"; scripted and labelled "Offline" otherwise','Local safety check runs before every AI call','Keeps the last 12 turns as context','Try "Do I have IBS?" or "I saw blood"']},
+  profile:{label:'Profile', group:'App', tab:'profile', purpose:'Your settings, log, answers, and the free / Plus split.', rules:['Fifth tab in the bottom bar','Appearance: System, Light or Dark, saved on this device','Log list with empty state','Plus opens a sheet with a real waitlist action','Sign out asks first']},
+};
+
+/* ================= state + storage ================= */
+const KEY = 'gutly-proto-v4';
+const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, rail:'open', tests:{}, theme:'system'});
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(_){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(_){} };
+
+/* ================= navigation ================= */
+const vp = $('#viewport');
+let current = '', expand = null;
+const slot = () => { const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : 'dinner'; };
+
+const AUTH = ['welcome','signup','login'];
+const homeFor = () => !S.loggedIn ? 'welcome' : !S.onboarded ? 'ob-1' : 'home';
+function go(id, opts={}){
+  if(!SCREENS[id]) id = homeFor();
+  if(current === 'log' && id !== 'log') stopCamera();
+  const sid = id.startsWith('ob-') ? 'onboard' : id;
+  current = id;
+  $$('[data-screen]').forEach(s => { const on = s.id === sid; s.hidden = !on; s.classList.remove('enter'); if(on){ void s.offsetWidth; s.classList.add('enter'); } });
+  const meta = SCREENS[id];
+  $('#tabbar').hidden = !meta.tab;
+  $('#toast').classList.toggle('low', !meta.tab);
+  vp.classList.toggle('fill', id === 'chat');
+  $$('.tab').forEach(t => t.dataset.tab === meta.tab ? t.setAttribute('aria-current','page') : t.removeAttribute('aria-current'));
+  closeLayer();
+  if(id.startsWith('ob-')) renderOnboard(+id.split('-')[1]);
+  if(id === 'welcome') $('#wel-mascot').src = MASCOT.happy;
+  if(id === 'signup') requestAnimationFrame(() => { $('#su-bar').style.transform = 'scaleX(.2)'; });
+  if(id === 'home') renderHome();
+  if(id === 'log') enterLog();
+  if(id === 'checkin') renderCheckin();
+  if(id === 'insights'){ expand = opts.expand || null; renderInsights(); }
+  if(id === 'meals') renderMeals();
+  if(id === 'chat') renderChat();
+  if(id === 'profile') renderProfile();
+  if(id !== 'chat') vp.scrollTop = 0;
+  if(location.hash.slice(1) !== id){ try { history.replaceState(null, '', '#' + id); } catch(_){ } }
+  renderRail();
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  const t = e.target.closest('.tab'); if(t) go(t.dataset.tab);
+});
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if(h && h !== current) go(h); });
+
+/* ================= rail ================= */
+function renderRail(){
+  const m = SCREENS[current] || {};
+  $('#note-purpose').textContent = m.purpose || 'Learn what matters to this person, one question at a time.';
+  $('#note-rules').innerHTML = (m.rules || ['Pick as many as apply; tap again to deselect','Continue once at least one is picked; Skip always there','Progress bar, steps 2 to 5 of 5']).map(r => `<li>${esc(r)}</li>`).join('');
+  let html = '', grp = '';
+  Object.entries(SCREENS).forEach(([id, s]) => {
+    if(s.group !== grp){ grp = s.group; html += `<div class="grp">${grp}</div>`; }
+    html += `<button class="rp" data-jump="${id}" aria-current="${id === current}">${esc(s.label)}</button>`;
+  });
+  $('#jump').innerHTML = html;
+}
+$('#jump').addEventListener('click', e => { const b = e.target.closest('[data-jump]'); if(b) go(b.dataset.jump); });
+function setRail(state){
+  S.rail = state; save();
+  const open = state === 'open';
+  $('#rail').classList.toggle('collapsed', !open);
+  const t = $('#rail-toggle'); t.setAttribute('aria-expanded', open); t.setAttribute('aria-label', open ? 'Collapse panel' : 'Expand panel'); t.title = t.getAttribute('aria-label');
+}
+$('#rail-toggle').addEventListener('click', () => setRail(S.rail === 'open' ? 'closed' : 'open'));
+$('#reset').addEventListener('click', () => { const keep = {rail:S.rail, theme:S.theme}; S = Object.assign(fresh(), keep); save(); $('#signup-form').reset(); $('#login-form').reset(); go('welcome'); toast('Demo reset.'); });
+
+/* ================= toast + sheet ================= */
+let toastT;
+function toast(msg, act){
+  const t = $('#toast'), b = $('#toast-act');
+  $('#toast-msg').textContent = msg; b.hidden = !act;
+  if(act){ b.textContent = act.label; b.onclick = () => { act.fn(); t.classList.remove('show'); }; }
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), act ? 4200 : 2400);
+}
+let lastFocus = null;
+function openSheet(html, wire){
+  lastFocus = document.activeElement;
+  $('#layer').innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true"><div class="grabber"></div>${html}</div>`;
+  const sheet = $('#layer .sheet');
+  wire && wire(sheet);
+  const f = sheet.querySelector('button'); f && f.focus();
+}
+$('#layer').addEventListener('click', e => { if(e.target.closest('[data-close]')) closeLayer(); });
+function closeLayer(){ if(!$('#layer').innerHTML) return; $('#layer').innerHTML = ''; lastFocus && lastFocus.focus && lastFocus.focus(); }
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(!$('#panel-guide').hidden || !$('#panel-notes').hidden){ closePanels(); return; }
+  closeLayer(); closeTip();
+});
+
+/* ================= tooltip for confidence (A8) ================= */
+const conf = (n, tip=true) => `<span class="conf"><span class="band" aria-hidden="true">${[1,2,3].map(i => `<i class="${i <= n ? 'f' : ''}" style="--n:${i}"></i>`).join('')}</span>${LEVELS[n]}${tip ? `<button class="tip-btn" data-tip aria-expanded="false" aria-label="What does ${LEVELS[n]} mean?"><span>i</span></button>` : ''}</span>`;
+const TIP = `<div class="tip" role="tooltip"><p><b>Early signal</b>: seen 2–3 times. Could easily be chance.</p><p><b>Emerging pattern</b>: seen several times over a week.</p><p><b>Consistent observation</b>: has held for 2+ weeks.</p><p>It's how sure Gutly is, not a score for you or your food.</p></div>`;
+function closeTip(){ $$('.tip').forEach(t => t.remove()); $$('[data-tip]').forEach(b => b.setAttribute('aria-expanded','false')); }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tip]');
+  if(!b){ if(!e.target.closest('.tip')) closeTip(); return; }
+  const open = b.getAttribute('aria-expanded') === 'true';
+  closeTip(); if(open) return;
+  b.setAttribute('aria-expanded','true'); b.closest('.conf').insertAdjacentHTML('beforeend', TIP);
+});
+
+/* ================= onboarding ================= */
+const ans = n => { const v = S.answers[n]; return Array.isArray(v) ? v : v ? [v] : []; };
+/* ===== answer picker: options + write your own (onboarding and profile) ===== */
+function renderPicker(el, n, idp, onChange){
+  const q = QS[n-1];
+  const draw = () => {
+    const picked = ans(n), extra = (S.extra && S.extra[n]) || [];
+    el.innerHTML = `<div class="pills" role="group" aria-label="${esc(q.q)}">${q.opts.map(o => `<button type="button" class="pill rp${picked.includes(o) ? ' on' : ''}" aria-pressed="${picked.includes(o)}" data-opt="${esc(o)}">${esc(o)}</button>`).join('')}${extra.map(o => `<button type="button" class="pill rp on custom" data-custom="${esc(o)}" aria-label="Remove ${esc(o)}" title="Tap to remove">${esc(o)}<svg class="ic"><use href="#i-close"/></svg></button>`).join('')}</div>
+      <form class="own" novalidate><label class="sr" for="${idp}-${n}">Write your own answer</label><input class="input" id="${idp}-${n}" maxlength="40" placeholder="Write your own…" autocomplete="off"><button class="btn btn-secondary rp" type="submit">Add</button></form>`;
+  };
+  const commit = (opts, extra) => { S.extra = S.extra || {}; S.extra[n] = extra; S.answers[n] = [...opts, ...extra]; save(); onChange && onChange(S.answers[n]); };
+  const current = () => ({opts: ans(n).filter(a => q.opts.includes(a)), extra: ((S.extra && S.extra[n]) || []).slice()});
+  el.onclick = e => {
+    const o = e.target.closest('[data-opt]'), c = e.target.closest('[data-custom]');
+    if(!o && !c) return;
+    const {opts, extra} = current();
+    if(o){ const v = o.dataset.opt; const i = opts.indexOf(v); if(i < 0) opts.push(v); else opts.splice(i, 1); }
+    if(c){ const i = extra.indexOf(c.dataset.custom); if(i >= 0) extra.splice(i, 1); }
+    commit(opts, extra); draw();
+    const back = o ? el.querySelector(`[data-opt="${CSS.escape(o.dataset.opt)}"]`) : el.querySelector('input'); back && back.focus();
+  };
+  el.onsubmit = e => {
+    e.preventDefault();
+    const inp = el.querySelector('input'), v = inp.value.trim().replace(/\s+/g, ' ');
+    if(!v) return;
+    const {opts, extra} = current();
+    const match = q.opts.find(x => x.toLowerCase() === v.toLowerCase());
+    if(match){ if(!opts.includes(match)) opts.push(match); }
+    else if(!extra.some(x => x.toLowerCase() === v.toLowerCase())) extra.push(v);
+    commit(opts, extra); draw(); buzz(8);
+    const ni = el.querySelector('input'); ni && ni.focus();
+  };
+  draw();
+}
+
+function renderOnboard(n){
+  const q = QS[n-1], sec = $('#onboard'), picked = ans(n);
+  sec.setAttribute('aria-label', `Question ${n} of 4`);
+  sec.innerHTML = `<div class="ob-top">${n > 1 ? `<button class="back rp" data-go="ob-${n-1}"><svg class="ic sm"><use href="#i-back"/></svg>Back</button>` : `<span class="wordmark">Gutly</span>`}<button class="btn-text rp" id="ob-skip">Skip</button></div>
+    <div class="progress" aria-hidden="true"><i id="ob-bar" style="transform:scaleX(${n/5})"></i></div>
+    <p class="step-of">Step ${n+1} of 5</p>
+    ${n === 1 ? `<img class="mascot ob-mascot idle" src="${MASCOT.happy}" alt="">` : ''}
+    <h1 class="title">${esc(q.q)}</h1>
+    <p class="multi-note">Pick as many as apply, or write your own.</p>
+    <div id="ob-picker"></div>
+    <button class="btn btn-primary rp ob-cta" id="ob-next" ${picked.length ? '' : 'disabled'}>${n < 4 ? 'Continue' : 'Finish'}</button>`;
+  requestAnimationFrame(() => { const bar = $('#ob-bar'); if(bar) bar.style.transform = `scaleX(${(n+1)/5})`; });
+  const next = () => n < 4 ? go('ob-' + (n+1)) : finishOnboarding();
+  $('#ob-skip').onclick = next; $('#ob-next').onclick = next;
+  renderPicker($('#ob-picker'), n, 'own-ob', a => { $('#ob-next').disabled = !a.length; });
+}
+
+/* ================= auth: sign up, log in, guest ================= */
+async function hashPw(pw){
+  try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('gutly:' + pw)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  catch(_){ let h = 7; for(const c of pw) h = (h * 31 + c.charCodeAt(0)) | 0; return 'x' + h; }
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const setHint = (id, msg) => { const h = $(id); h.textContent = msg || ''; h.classList.toggle('err', !!msg); return !msg; };
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pw]'); if(!t) return;
+  const inp = $('#' + t.dataset.pw), show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password'; t.textContent = show ? 'Hide' : 'Show';
+  t.setAttribute('aria-pressed', show); t.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+});
+$('#signup-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nm = $('#su-name').value.trim(), em = $('#su-email').value.trim(), pw = $('#su-pass').value;
+  let ok = setHint('#su-name-hint', nm ? '' : 'Add your name so Gutly knows what to call you.');
+  ok = setHint('#su-email-hint', !em ? 'Add your email.' : EMAIL_RE.test(em) ? '' : 'That email looks incomplete. Check for a missing @ or dot.') && ok;
+  ok = setHint('#su-pass-hint', pw.length >= 8 ? '' : `Use at least 8 characters (${pw.length} so far).`) && ok;
+  if(!ok){ buzz([10, 40, 10]); return; }
+  S.account = {name:nm, email:em.toLowerCase(), hash:await hashPw(pw)};
+  S.loggedIn = true; S.guest = false; S.name = nm.split(/\s+/)[0]; S.fullName = nm; S.email = em;
+  S.onboarded = false; save(); buzz(16); go('ob-1');
+  toast(`Account created. Hi, ${S.name}!`);
+});
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const em = $('#li-email').value.trim().toLowerCase(), pw = $('#li-pass').value, err = $('#li-err');
+  if(!em || !pw){ err.textContent = 'Enter your email and password.'; buzz([10, 40, 10]); return; }
+  if(!S.account || S.account.email !== em){ err.textContent = "We couldn't find an account with that email on this device. Check it, or create an account."; buzz([10, 40, 10]); return; }
+  if(S.account.hash !== await hashPw(pw)){ err.textContent = "That password doesn't match. Try again, or use Forgot password."; buzz([10, 40, 10]); return; }
+  err.textContent = ''; S.loggedIn = true; S.guest = false; S.name = S.account.name.split(/\s+/)[0]; S.fullName = S.account.name; S.email = S.account.email; save(); buzz(16);
+  $('#login-form').reset(); go(S.onboarded ? 'home' : 'ob-1'); toast(`Welcome back, ${S.name}.`);
+});
+$('#forgot').addEventListener('click', () => {
+  const em = $('#li-email').value.trim();
+  $('#li-err').textContent = '';
+  toast(em ? `If ${em} has an account, a reset link would go there. Not live in this prototype.` : 'Enter your email first, then tap Forgot password.');
+});
+$('#guest').addEventListener('click', () => { S.loggedIn = true; S.guest = true; S.name = ''; S.fullName = 'Guest'; S.email = ''; save(); go(S.onboarded ? 'home' : 'ob-1'); });
+function finishOnboarding(){
+  S.onboarded = true; save(); buzz(16); go('home');
+  toast(S.name ? `You're all set, ${S.name}. Gutly's ready when you are.` : "You're all set. Gutly's ready when you are.");
+}
+
+/* ================= home ================= */
+const todays = () => S.logs.filter(x => dayKey(x.time) === dayKey(Date.now()));
+function renderHome(){
+  $('#home-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'});
+  $('#home-title').textContent = S.name ? `How's your gut today, ${S.name}?` : "How's your gut today?";
+  $('#home-mascot').src = MASCOT[S.mood] || MASCOT.calm;
+  const t = todays(), ctx = $('#home-context');
+  if(!t.length){
+    ctx.innerHTML = `<div class="empty"><p>Nothing logged yet today.</p></div>`;
+  } else {
+    const last = t[t.length-1];
+    ctx.innerHTML = `<div class="today"><span class="eyebrow">Today so far</span>${t.map(x =>
+      `<div class="today-row"><time>${fmt(x.time)}</time>${x.type === 'meal' ? (x.thumb ? `<img class="thumb" src="${x.thumb}" alt="">` : `<span class="thumb" style="display:grid;place-items:center"><svg class="ic sm"><use href="#i-note"/></svg></span>`) : `<span class="thumb" style="display:grid;place-items:center;color:var(--muted)"><svg class="ic sm"><use href="#i-mood"/></svg></span>`}<span>${x.type === 'meal' ? esc(x.title) + (x.note ? ` <span class="muted">· ${esc(x.note)}</span>` : '') : 'Check-in · ' + esc(x.tags.join(', '))}</span></div>`).join('')}
+      ${last.type === 'meal' ? `<p class="small muted" style="margin:8px 0 0">We'll check in gently in a couple of hours.</p>` : ''}</div>`;
+  }
+  const ins = INSIGHTS.find(i => !S.dismissed.includes(i.id));
+  $('#home-insight').innerHTML = ins
+    ? `<div class="card ins-card"><div class="eyebrow" style="margin-bottom:8px">One thing we're noticing</div>${conf(ins.level)}<p class="obs">${esc(ins.obs)}</p><p class="re">${esc(ins.re)}</p><button class="link rp" id="home-why">Why this?<svg class="ic sm"><use href="#i-chev"/></svg></button></div>`
+    : `<div class="quiet">No strong insight yet. Patterns show up after a few days of logging, whenever it suits you.</div>`;
+  if(ins) $('#home-why').onclick = () => go('insights', {expand: ins.id});
+  $('#home-checkin-btn').textContent = S.skips >= 2 ? 'Check in, if you like' : 'Check in';
+  const ideas = [...MEALS.filter(m => m.when.includes(slot())), ...MEALS.filter(m => !m.when.includes(slot()))].slice(0, 4);
+  $('#home-ideas').innerHTML = ideas.map((m, i) => `<button class="idea rp" data-go="meals" style="--i:${i}"><h3>${esc(m.name)}</h3><div class="when">${m.when.join(' or ')}</div><p>${esc(m.why)}</p></button>`).join('');
+}
+
+/* ================= camera + log meal ================= */
+let stream = null, photoBlob = null;
+const GUESS = {breakfast:'Chai with poha', lunch:'Dal-chawal with salad', dinner:'Moong dal khichdi'};
+async function startCamera(){
+  const msg = $('#vf-hint');
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg.textContent = IDLE_HINT(); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    if(current !== 'log'){ stopCamera(); return; }
+    const v = $('#video'); v.srcObject = stream; v.hidden = false; await v.play().catch(() => {});
+    $('#vf-msg').hidden = true; $('#live-badge').hidden = false;
+  } catch(_){
+    stream = null;
+    if(current === 'log' && coarse() && openNativeCamera()) msg.textContent = 'Your camera is open. Closed it? Tap the shutter to reopen.';
+    else msg.textContent = IDLE_HINT();
+  }
+}
+function stopCamera(){
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  const v = $('#video'); v.srcObject = null; v.hidden = true; $('#vf-msg').hidden = false; $('#live-badge').hidden = true;
+}
+const coarse = () => matchMedia('(pointer: coarse)').matches;
+function livePolicy(){ const pp = document.permissionsPolicy || document.featurePolicy; try { if(pp && pp.allowsFeature) return pp.allowsFeature('camera'); } catch(_){} return null; }
+function openNativeCamera(){
+  const act = navigator.userActivation; if(act && !act.isActive) return false;
+  try { $('#cam-input').click(); return true; } catch(_){ return false; }
+}
+const IDLE_HINT = () => coarse() ? 'Tap the shutter to open your camera.' : 'Tap the shutter to choose a photo. On a phone, it opens your camera.';
+function enterLog(){
+  $('#cam').hidden = false; $('#captured').hidden = true; $('#saved').hidden = true;
+  $('#meal-note').value = ''; $('#meal-name').value = ''; $('#ai-line').textContent = '';
+  $('#gal-input').value = ''; $('#cam-input').value = ''; photoBlob = null;
+  $$('#note-chips .pill').forEach(p => { p.classList.remove('on'); p.setAttribute('aria-pressed','false'); });
+  const hint = $('#vf-hint');
+  const canLive = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && livePolicy() !== false;
+  if(canLive){ hint.textContent = 'Opening your camera…'; startCamera(); return; }
+  if(coarse() && openNativeCamera()) hint.textContent = 'Your camera is open. Closed it? Tap the shutter to reopen.';
+  else hint.textContent = IDLE_HINT();
+}
+$('#cam-input').addEventListener('cancel', () => { if(current === 'log') $('#vf-hint').textContent = 'Camera closed. Tap the shutter to open it again.'; });
+$('#shutter').addEventListener('click', () => {
+  if(stream){
+    const v = $('#video'), c = document.createElement('canvas');
+    c.width = v.videoWidth || 1080; c.height = v.videoHeight || 1350;
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    c.toBlob(b => { stopCamera(); if(b) showCaptured(b); }, 'image/jpeg', .88);
+  } else {
+    $('#cam-input').click();
+  }
+});
+const onFile = e => { const f = e.target.files && e.target.files[0]; if(f){ stopCamera(); showCaptured(f); } };
+$('#cam-input').addEventListener('change', onFile);
+$('#gal-input').addEventListener('change', onFile);
+$('#no-photo').addEventListener('click', () => { stopCamera(); showCaptured(null); });
+$('#retake').addEventListener('click', enterLog);
+
+function downscale(blob, max){
+  return new Promise(res => {
+    const url = URL.createObjectURL(blob), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', .78));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+async function showCaptured(blob){
+  photoBlob = blob;
+  $('#cam').hidden = true; $('#captured').hidden = false;
+  const shot = $('#shot'), name = $('#meal-name'), line = $('#ai-line');
+  if(!blob){
+    shot.innerHTML = `<div class="ph"><svg class="ic" style="width:44px;height:44px"><use href="#i-note"/></svg>No photo — a note is plenty</div>`;
+    name.value = ''; line.textContent = ''; name.focus(); return;
+  }
+  const preview = await downscale(blob, 720);
+  shot.innerHTML = preview ? `<img src="${preview}" alt="Your meal">` : `<div class="ph">Couldn't show that photo, but you can still save the meal.</div>`;
+  name.value = '';
+  if(AI.images){
+    line.innerHTML = `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Gutly is reading your plate…`;
+    try {
+      const r = await aiDish(blob);
+      if(current !== 'log') return;
+      if(r && typeof r.dish === 'string' && r.dish.trim()){
+        if(!name.value) name.value = r.dish.trim().slice(0, 60);
+        line.textContent = r.confidence === 'low' ? "Gutly isn't sure. Edit it if it's off." : 'Named by Gutly from your photo. Edit it if it’s off.';
+      } else { line.textContent = "Gutly couldn't name this one. Type what it was."; }
+    } catch(e){
+      line.textContent = e && e.code === 'not_granted' ? 'Photo naming is off. Type what it was.' : "Couldn't name it just now. Type what it was.";
+      if(e && ['not_granted','sampling_disabled','images_unavailable'].includes(e.code)) AI.images = false;
+    }
+  } else {
+    name.value = GUESS[slot()];
+    line.textContent = 'Offline guess from the time of day. Edit it if it’s off.';
+  }
+}
+$('#note-chips').innerHTML = NOTE_CHIPS.map(c => `<button class="pill sm rp" type="button" aria-pressed="false">${esc(c)}</button>`).join('');
+$('#note-chips').addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if(!p) return;
+  const on = p.classList.toggle('on'); p.setAttribute('aria-pressed', on);
+  const ta = $('#meal-note'), parts = ta.value.split(',').map(s => s.trim()).filter(Boolean), v = p.textContent.toLowerCase();
+  ta.value = (on ? [...parts, v] : parts.filter(x => x.toLowerCase() !== v)).join(', ');
+});
+$('#save-meal').addEventListener('click', async () => {
+  const title = $('#meal-name').value.trim() || (photoBlob ? 'Meal (photo)' : 'Meal');
+  const thumb = photoBlob ? await downscale(photoBlob, 120) : null;
+  S.logs.push({type:'meal', time:Date.now(), title, note:$('#meal-note').value.trim(), thumb});
+  S.logs = S.logs.slice(-40); save();
+  const sv = $('#saved'); $('#saved-mascot').src = MASCOT.excited; sv.hidden = false; celebrate($('#saved-mascot'));
+  setTimeout(() => { if(current === 'log') go('home'); }, 1600);
+});
+
+/* ================= check-in ================= */
+function renderCheckin(){
+  $('#ci-mood').innerHTML = MOODS.map((m, i) => `<button class="mood rp" data-mood="${m.k}" aria-pressed="false" style="--i:${i}"><img src="${MASCOT[m.k]}" alt=""><span>${m.l}</span></button>`).join('');
+  $('#ci-mood').classList.add('stagger');
+  $('#ci-gut').innerHTML = GUTS.map(g => `<button class="pill rp" aria-pressed="false">${g}</button>`).join('');
+  $('#save-ci').disabled = true;
+}
+$('#checkin').addEventListener('click', e => {
+  const m = e.target.closest('.mood'), p = e.target.closest('#ci-gut .pill');
+  if(m){
+    const on = m.getAttribute('aria-pressed') !== 'true';
+    const chosen = $$('.mood[aria-pressed="true"]');
+    if(on && chosen.length >= 2){ toast('Two is plenty. Unselect one to swap.'); return; }
+    m.setAttribute('aria-pressed', on); if(on) celebrate(m.querySelector('img'));
+  }
+  if(p){ const on = p.classList.toggle('on'); p.setAttribute('aria-pressed', on); }
+  $('#save-ci').disabled = !$$('.mood[aria-pressed="true"], #ci-gut .pill.on').length;
+});
+$('#save-ci').addEventListener('click', () => {
+  const moods = $$('.mood[aria-pressed="true"]').map(m => m.dataset.mood);
+  const tags = [...moods.map(k => MOODS.find(x => x.k === k).l), ...$$('#ci-gut .pill.on').map(p => p.textContent)];
+  if(moods[0]) S.mood = moods[0];
+  S.logs.push({type:'check', time:Date.now(), tags, mood:moods[0] || null}); save();
+  go('home'); celebrate($('#home-mascot')); toast('Noted. This only adds context.');
+});
+$('#skip-ci').addEventListener('click', () => { S.skips++; save(); go('home'); toast(S.skips >= 2 ? "No problem. We'll ask less often." : 'No problem.'); });
+
+/* ================= insights ================= */
+let insightsLoaded = false;
+function renderInsights(){
+  const el = $('#ins-list'), ev = $('#evidence');
+  const mealsN = SEED_WEEK.meals + S.logs.filter(x => x.type === 'meal').length;
+  const ciN = SEED_WEEK.checkins + S.logs.filter(x => x.type === 'check').length;
+  ev.innerHTML = `Based on <b id="ev-m">0</b> meals and <b id="ev-c">0</b> check-ins over the last ${SEED_WEEK.days} days.`;
+  countUp($('#ev-m'), mealsN); countUp($('#ev-c'), ciN);
+  if(!insightsLoaded){
+    el.innerHTML = '<div class="skel" aria-label="Loading insights"></div><div class="skel"></div>';
+    setTimeout(() => { insightsLoaded = true; if(current === 'insights') renderInsights(); }, 450);
+    return;
+  }
+  const list = INSIGHTS.filter(i => !S.dismissed.includes(i.id));
+  el.className = 'stack stagger';
+  el.innerHTML = list.map((i, n) => {
+    const open = expand === i.id;
+    return `<article class="ins" data-id="${i.id}" style="--i:${n}">
+      <div class="ins-top">${conf(i.level)}<button class="icon-btn rp" data-dismiss="${i.id}" aria-label="Hide this insight"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+      <p class="obs">${esc(i.obs)}</p><p class="re">${esc(i.re)}</p>
+      <button class="link rp" data-why="${i.id}" aria-expanded="${open}">${open ? 'Hide details' : 'Why this?'}</button>
+      ${open ? `<div class="why"><span class="eyebrow">This showed up because</span><ul>${i.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul><button class="link rp" data-ask="${i.id}">Ask Gutly about this<svg class="ic sm"><use href="#i-chev"/></svg></button></div>` : ''}
+    </article>`;
+  }).join('') + (list.length
+    ? `<div class="quiet" style="--i:${list.length}">We're quietly watching a couple of other things. They're not strong enough to share yet.</div>`
+    : `<div class="empty"><img src="${MASCOT.calm}" alt=""><p>No insights to show right now. Keep logging when it suits you, and patterns will show up here.</p></div><button class="btn-text rp" id="restore-ins">Show hidden insights again</button>`);
+  const r = $('#restore-ins'); if(r) r.onclick = () => { S.dismissed = []; save(); renderInsights(); };
+}
+$('#ins-list').addEventListener('click', e => {
+  const w = e.target.closest('[data-why]'), d = e.target.closest('[data-dismiss]'), a = e.target.closest('[data-ask]');
+  if(w){ expand = expand === w.dataset.why ? null : w.dataset.why; renderInsights(); }
+  if(d){
+    const id = d.dataset.dismiss; d.closest('.ins').classList.add('out');
+    setTimeout(() => { S.dismissed.push(id); save(); renderInsights(); }, 220);
+    toast("Got it. We won't show that one.", {label:'Undo', fn:() => { S.dismissed = S.dismissed.filter(x => x !== id); save(); renderInsights(); }});
+  }
+  if(a){ const i = INSIGHTS.find(x => x.id === a.dataset.ask); go('chat'); setTimeout(() => sendUser(i.ask), 260); }
+});
+
+/* ================= meals ================= */
+const FILTERS = [['all','Any time'],['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['saved','Saved']];
+function mealCard(m, low, i){
+  const saved = S.saved.includes(m.id);
+  return `<article class="meal${low ? ' low' : ''}" style="--i:${i}"><div class="grow"><h3>${esc(m.name)}</h3><div class="when">${m.when.join(' or ')}</div><p>${esc(m.why)}</p>${low ? '' : `<div style="margin-top:8px">${conf(m.level, false)}</div>`}</div>
+    <button class="icon-btn rp" data-save="${m.id}" aria-pressed="${saved}" aria-label="${saved ? 'Saved for later. Tap to remove' : 'Save for later'}"><svg class="ic sm"><use href="#i-mark"/></svg></button></article>`;
+}
+function renderMeals(){
+  $('#meal-filters').innerHTML = FILTERS.map(([k, l]) => `<button class="pill sm rp${S.filter === k ? ' on' : ''}" data-filter="${k}" aria-pressed="${S.filter === k}">${l}</button>`).join('');
+  const f = m => S.filter === 'all' || (S.filter === 'saved' ? S.saved.includes(m.id) : m.when.includes(S.filter));
+  const a = MEALS.filter(f), b = MEALS_LOW.filter(f);
+  const ml = $('#meal-list'); ml.className = 'stack stagger';
+  ml.innerHTML = a.length ? a.map((m, i) => mealCard(m, false, i)).join('') : `<div class="empty"><img src="${MASCOT.tired}" alt=""><p>${S.filter === 'saved' ? 'Nothing saved yet. Tap the bookmark on any idea to keep it here.' : 'Nothing stands out for this time yet.'}</p></div>`;
+  $('#meal-low').innerHTML = b.length ? b.map((m, i) => mealCard(m, true, i)).join('') : `<div class="quiet">Nothing here for this filter.</div>`;
+}
+$('#meals').addEventListener('click', e => {
+  const f = e.target.closest('[data-filter]'), s = e.target.closest('[data-save]');
+  if(f){ S.filter = f.dataset.filter; save(); renderMeals(); }
+  if(s){ const id = s.dataset.save, had = S.saved.includes(id); S.saved = had ? S.saved.filter(x => x !== id) : [...S.saved, id]; save(); renderMeals(); if(!had) buzz(12); toast(had ? 'Removed from saved.' : 'Saved for later.'); }
+});
+
+/* ================= profile ================= */
+const PROF_Q = ['Brings you here','Feels off','Help with','Support'];
+function renderProfile(){
+  const full = S.fullName || 'Guest';
+  $('#prof-av').textContent = (full[0] || 'A').toUpperCase();
+  $('#prof-name').textContent = full;
+  $('#prof-meta').textContent = S.guest ? 'Exploring without an account' : (S.email || '') + (S.waitlist ? ' · Plus waitlist' : ' · Free plan');
+  $('#signout').textContent = S.guest ? 'Leave guest mode' : 'Log out';
+  const logs = [...S.logs].reverse().slice(0, 12);
+  $('#prof-log').innerHTML = logs.length ? logs.map(x => `<div class="log-row">${x.type === 'meal' ? (x.thumb ? `<img class="thumb" src="${x.thumb}" alt="">` : `<span class="thumb"><svg class="ic sm"><use href="#i-note"/></svg></span>`) : `<span class="thumb" style="display:grid;place-items:center;color:var(--muted)"><svg class="ic sm"><use href="#i-mood"/></svg></span>`}<div class="grow"><time>${new Date(x.time).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · ${fmt(x.time)}</time>${x.type === 'meal' ? esc(x.title) : 'Check-in · ' + esc(x.tags.join(', '))}</div></div>`).join('')
+    : `<div class="empty" style="margin:0"><img src="${MASCOT.calm}" alt=""><p>Your meals and check-ins will appear here. Nothing yet.</p></div>`;
+  $('#prof-answers').innerHTML = QS.map((_, i) => `<div class="row"><span>${PROF_Q[i]}</span><span>${esc(ans(i+1).join(', ') || 'Skipped')}</span></div>`).join('');
+}
+$('#edit-answers').addEventListener('click', () => openSheet(
+  `<h2>What you told us</h2><p class="muted small" style="margin:0 0 16px">Pick as many as apply, or write your own. Changes save as you go.</p>${QS.map((q, i) => `<div class="q-block"><h3>${esc(q.q)}</h3><div id="pf-pick-${i+1}"></div></div>`).join('')}<button class="btn btn-primary rp" data-close style="margin-top:22px">Done</button>`,
+  sheet => { QS.forEach((_, i) => renderPicker($('#pf-pick-' + (i+1), sheet), i+1, 'own-pf')); }));
+$('#layer').addEventListener('click', e => { if(e.target.closest('[data-close]') && current === 'profile') setTimeout(renderProfile, 0); });
+$('#plus-btn').addEventListener('click', () => openSheet(
+  `<h2>Gutly Plus</h2><p class="muted small" style="margin:0">Planned for ₹149 a month or ₹999 a year. Not live yet.</p><ul><li>Gutly remembers months, not weeks</li><li>A gentle weekly reflection</li><li>A two-week report to share with your doctor</li></ul>
+   <div class="stack"><button class="btn btn-primary rp" id="wl">${S.waitlist ? "You're on the waitlist" : 'Join the waitlist'}</button><button class="btn-text rp" data-close>Not now</button></div>`,
+  sheet => { const b = $('#wl', sheet); b.disabled = S.waitlist; b.onclick = () => { S.waitlist = true; save(); closeLayer(); renderProfile(); buzz(16); toast("You're on the Plus waitlist."); }; }));
+$('#signout').addEventListener('click', () => openSheet(
+  S.guest ? `<h2>Leave guest mode?</h2><p class="muted">Guest data isn't tied to an account, so leaving clears it from this device.</p><div class="stack" style="margin-top:16px"><button class="btn btn-primary rp" id="so-yes">Leave and clear</button><button class="btn-text rp" data-close>Stay</button></div>`
+          : `<h2>Log out?</h2><p class="muted">Your meals, chat and answers stay on this device. Log back in with the same email and password to pick up where you left off.</p><div class="stack" style="margin-top:16px"><button class="btn btn-primary rp" id="so-yes">Log out</button><button class="btn-text rp" data-close>Stay logged in</button></div>`,
+  sheet => { $('#so-yes', sheet).onclick = () => {
+    if(S.guest){ const keep = {rail:S.rail, theme:S.theme, account:S.account}; S = Object.assign(fresh(), keep); } else { S.loggedIn = false; }
+    save(); closeLayer(); go('welcome'); toast(S.account ? 'Logged out. Your data is saved on this device.' : 'Guest data cleared.'); }; }));
+
+/* ================= Gutly: AI with offline fallback (A8) ================= */
+const AI = {sample:null, live:false, images:false, decided:false, mode:'off'};
+const API_BASE = '/api/';
+const DISH_PROMPT = 'This photo shows a meal someone is about to eat, most likely Indian home, canteen or delivery food. Reply with only JSON: {"dish": string, "confidence": "high" | "medium" | "low"}. "dish" is a plain everyday name of 2 to 5 words, for example "dal-chawal with salad" or "masala dosa". If it is not food, use an empty string. Do not comment on health, calories or portions.';
+/* AI runs through claude.ai when the page is an artifact, or through this site's own /api functions when deployed (e.g. on Vercel). */
+async function aiChat(turns, onText, signal){
+  if(AI.mode === 'claude') return AI.sample([{role:'user', content:rules()}, ...turns], {modelTier:'quick', cache:false, signal, onText});
+  let r;
+  try { r = await fetch(API_BASE + 'chat', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({context:rules(), messages:turns}), signal}); }
+  catch(e){ const err = new Error('network'); err.code = e && e.name === 'AbortError' ? 'cancelled' : 'upstream'; throw err; }
+  if(!r.ok){ const err = new Error('server ' + r.status); err.code = r.status === 429 ? 'rate_limited' : r.status === 503 ? 'sampling_disabled' : 'upstream'; throw err; }
+  const j = await r.json(); const text = String((j && j.text) || ''); onText && onText({text}); return {text};
+}
+async function aiDish(blob){
+  if(AI.mode === 'claude') return AI.sample.json(DISH_PROMPT, {images:[blob], modelTier:'quick'});
+  const image = await downscale(blob, 768);
+  const r = await fetch(API_BASE + 'dish', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({image})});
+  if(!r.ok){ const err = new Error('dish ' + r.status); err.code = r.status === 503 ? 'images_unavailable' : 'upstream'; throw err; }
+  return r.json();
+}
+function setStatus(){
+  const st = $('#ai-status');
+  st.className = 'status ' + (!AI.decided ? '' : AI.live ? 'ai' : 'off');
+  st.lastElementChild.textContent = !AI.decided ? 'Checking…' : AI.live ? 'AI · replies from Claude' : 'Offline · scripted replies';
+}
+(async () => {
+  try {
+    const s = window.claude && window.claude.use ? await window.claude.use('sample') : null;
+    if(s){ AI.sample = s; AI.live = true; AI.mode = 'claude'; const lim = await s.limits().catch(() => null); AI.images = !!(lim && lim.images); }
+  } catch(_){}
+  if(!AI.live && !(window.claude && window.claude.use) && /^https?:$/.test(location.protocol)){
+    try { const r = await fetch(API_BASE + 'chat', {cache:'no-store'}); if(r.ok){ const j = await r.json(); if(j && j.ok){ AI.live = true; AI.mode = 'server'; AI.images = !!j.images; } } } catch(_){}
+  }
+  AI.decided = true; setStatus();
+})();
+setTimeout(() => { if(!AI.decided){ AI.decided = true; setStatus(); } }, 11000);
+
+const RED = /(blood|black stool|vomit|fever|severe|weight loss|losing weight|faint|chest pain|can'?t keep (food|anything) down)/i;
+const HARM = /(suicid|kill myself|end my life|self[- ]?harm|hurt myself|want to die|don'?t want to live)/i;
+const ED = /(starv|purg|make myself (sick|throw up)|stop eating to lose|skip(ping)? meals to lose)/i;
+function safetyCheck(t){
+  if(HARM.test(t)) return {safety:true, lines:["I'm really glad you told me. You deserve support from a person right now, not just an app.","In India you can call Tele-MANAS on 14416, free and open 24 hours. If you might act on these thoughts, call 112 now or go to the nearest emergency department.","I'm here to keep talking too."], replies:[]};
+  if(RED.test(t)) return {safety:true, lines:["Thank you for telling me. Blood, fever, vomiting, weight loss, or pain that's severe or won't settle are things a doctor needs to hear about, and soon.","I'm not able to assess symptoms like these, and I don't want to guess. I'm still here for anything else on your mind."], replies:['Okay','Something else']};
+  if(ED.test(t)) return {safety:true, lines:["Thanks for being honest about that. Restricting food to lose weight is something a doctor or counsellor can help with properly, and Gutly isn't built for it.","I'm happy to keep talking about how meals feel, without any targets or rules."], replies:['Okay']};
+  return null;
+}
+function rules(){
+  const recent = S.logs.slice(-8).map(x => x.type === 'meal' ? `- ${fmt(x.time)} ${new Date(x.time).toDateString()}: ate ${x.title}${x.note ? ' (' + x.note + ')' : ''}` : `- ${fmt(x.time)} ${new Date(x.time).toDateString()}: check-in ${x.tags.join(', ')}`).join('\n') || '- nothing logged in the app yet';
+  return `You are Gutly, the gut-health companion chat inside the Gutly app for young people in India. You are talking with ${S.name || 'someone exploring as a guest'}.
+How you speak: calm, warm, observational and curious, like a cautious friend. Short: 2 to 4 sentences. Plain words. Hedged language ("might", "seemed", "could be"). Explain why you say something ("This showed up because..."). Accept contradictions.
+Never: diagnose, name a condition they might have, suggest medicines or supplements, rank foods as good or bad, tell them to avoid or cut a food, give calorie or weight advice, or sound more certain than a cautious human. If asked for any of that, say kindly that a doctor is the right person, and offer what their logs suggest instead.
+Use only the data below about them; don't invent logs.
+Their week (seeded demo data): chai with poha on 4 mornings, 3 followed by "calm"; rajma-chawal lunches on Tuesday and Thursday, both followed by "bloated" around 4 pm, and both were rushed days; dal with phulka at 3 dinners each followed by a "settled" morning; paneer with roti twice, one heavy morning; warm simple dinners (khichdi, dal-rice, curd rice) 9 times over 3 weeks, 8 followed by settled or light mornings. Meals that felt easier: moong dal khichdi, poha, dal with phulka, curd rice, idli with sambar.
+What they told us at setup: ${Object.values(S.answers).flat().join('; ') || 'skipped'}.
+Logged in the app:
+${recent}
+Format: write the reply as plain text, no markdown, no lists. Then on a final new line write "CHIPS:" followed by up to 3 short replies they might tap next, separated by " | ", each under 5 words.`;
+}
+function splitChips(text){
+  const i = text.lastIndexOf('CHIPS:');
+  if(i < 0) return {body:text.trim(), chips:[]};
+  return {body:text.slice(0, i).trim(), chips:text.slice(i + 6).split('|').map(s => s.trim()).filter(Boolean).slice(0, 3)};
+}
+
+/* scripted fallback (offline) */
+function scripted(text){
+  const l = text.toLowerCase(), has = (...w) => w.some(x => l.includes(x)), word = re => re.test(l);
+  const lastMeal = [...S.logs].reverse().find(x => x.type === 'meal' && dayKey(x.time) === dayKey(Date.now()));
+  if(has('ibs','diagnos','disease','wrong with me','do i have','cure','medicine','medication','tablet','supplement','probiotic','antacid'))
+    return {lines:["That's a fair thing to wonder. I can't diagnose anything, and I'm not the right one to say what's going on medically. A doctor is.","What I can do is show you what your own logs suggest. Some people find that useful to bring to an appointment."], replies:['Summarise my week','Not now']};
+  if(has('avoid','bad for','good for','stop eating','cut out','unhealthy','healthy','safe to eat','safe food'))
+    return {lines:["I don't sort foods into good or bad. Bodies vary, and the same food can feel different on different days.","Here's what I might be seeing for you: poha, khichdi and dal with phulka have usually been followed by settled check-ins. Rajma lunches felt heavier twice, both on rushed days. So it may be the day around the food as much as the food."], replies:['Tell me about rajma','Open meal ideas']};
+  if(has('rajma')) return {lines:["This showed up because rajma-chawal was your lunch on Tuesday and Thursday, and both afternoons you checked in as bloated around 4 pm.","Both of those days you'd also noted feeling rushed. Pace and stress can affect digestion on their own, so I'm holding this loosely. It's an early signal, not a conclusion."], replies:['Could be coincidence','I was rushed both days','Show my week']};
+  if(has('chai','poha','morning')) return {lines:["This showed up because you logged chai with poha on four mornings this week. On three of them, your check-in within two hours was calm or settled.","The fourth came after a late night, which might explain the difference. I'll keep watching."], replies:['That matches how I feel','Not sure']};
+  if(has('paneer','roti','phulka','dal and')) return {lines:["Dal with phulka came up at three dinners this week, each followed by a settled morning. Paneer with roti came up twice, and one of those mornings felt heavy.","Two paneer meals isn't much to go on, so this could easily change."], replies:['Show my week']};
+  if(has('dinners')) return {lines:["Over three weeks, warm simple dinners like khichdi, dal-rice and curd rice came up nine times. Eight were followed by a settled or light morning.","That's the steadiest pattern so far. It can still shift, and that's fine."], replies:['Open meal ideas']};
+  if(l.trim() === 'not now') return {lines:["No problem. I'm here whenever you want to come back to it."]};
+  if(word(/\b(yes|agree|matches|makes sense|true)\b/)) return {lines:["Good to hear it lines up with your own sense of things. Your read on your body matters more than any pattern I spot."]};
+  if(has('summar','my week','this week','pattern','notic')) return {lines:["Here's what I might be seeing this week: mornings with chai and poha seemed calmer; two heavier afternoons came after rajma lunches on rushed days; and dal with phulka seemed easier than paneer with roti.","These are still early. Patterns can shift, and that's normal."], replies:['Why rajma?','Why chai and poha?','What about stress?']};
+  if(has('rushed','stress','anxious','busy','deadline','meeting','hurry')) return {lines:["That's useful context, thank you. Pace and stress can affect digestion on their own, so I'll factor that in rather than pin things on a food.","Some of your calmest afternoons this week came after slower lunches."], replies:['Show my week','Thanks']};
+  if(has('bloat','heavy','gas','discomfort','uncomfortable','cramp','pain','upset')) return {lines:["That sounds uncomfortable. I'm sorry today feels this way.", lastMeal ? `I can see ${lastMeal.title.toLowerCase()} logged at ${fmt(lastMeal.time)}. On its own, one meal doesn't tell us much.` : null, "Your two other heavy afternoons this week came after rajma lunches, on days you'd also felt rushed. It could be the food, the pace, or both. What was today like?"], replies:['I was rushed','Had a calm lunch','Not sure']};
+  if(has('calm lunch','was calm','relaxed','slow')) return {lines:["Thanks. Then I'll treat today as one data point rather than a pattern. A single heavy afternoon doesn't mean much on its own."]};
+  if(has('not sure','coincidence','maybe','no idea',"don't know")) return {lines:["That's completely fair. A couple of days isn't much to go on.","I'll keep watching quietly. If it doesn't hold up, it'll fade from your insights on its own."]};
+  if(has('eat','meal','lunch','dinner','breakfast','hungry','food','cook')) return {lines:["Meals like moong dal khichdi, curd rice and poha have felt easier for you before. Just ideas, not a plan."], replies:['Open meal ideas']};
+  if(word(/\b(thanks|thank you|ok|okay|got it|cool)\b/)) return {lines:["Anytime. I'm here whenever something comes up."]};
+  return {lines:["I'm listening. Could you tell me a bit more, like when it started or what the day was like? The more context, the clearer the picture gets."], replies:['I felt bloated','I was stressed','Show my week']};
+}
+
+const body = $('#chat-body');
+const STARTERS = ['I felt bloated after lunch','What patterns do you see?','Why did the rajma insight show up?','Do I have IBS?'];
+const scrollDown = () => body.scrollTo({top: body.scrollHeight, behavior: reduced() ? 'auto' : 'smooth'});
+function bubbleHTML(text){ return text.split(/\n+/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join(''); }
+function addMsg(who, text, extra=''){
+  const row = document.createElement('div'); row.className = 'msg ' + who;
+  row.innerHTML = `<div class="bubble ${extra}">${bubbleHTML(text)}</div>`;
+  body.append(row); scrollDown(); return row.querySelector('.bubble');
+}
+function renderChat(){
+  setStatus();
+  $('#chat-mascot').src = MASCOT.calm;
+  body.innerHTML = '';
+  if(!S.turns.length){
+    body.innerHTML = `<div class="chat-empty"><h2>Tell me what's been going on.</h2><p>I notice patterns in what you log and help make sense of them. I can't diagnose anything.</p><div class="starters stagger">${STARTERS.map((s, i) => `<button class="starter rp" style="--i:${i}">${esc(s)}</button>`).join('')}</div></div>`;
+    $$('.starter', body).forEach(b => b.onclick = () => sendUser(b.textContent));
+  } else {
+    S.turns.forEach(t => addMsg(t.role === 'user' ? 'me' : 'guti', t.content));
+  }
+  showReplies(null);
+}
+function showReplies(list){
+  const q = $('#qr');
+  if(!list || !list.length){ q.hidden = true; q.innerHTML = ''; return; }
+  q.innerHTML = ''; q.hidden = false;
+  list.forEach(label => {
+    const b = document.createElement('button'); b.className = 'pill rp'; b.type = 'button'; b.textContent = label;
+    b.onclick = () => { if(/meal ideas/i.test(label)){ q.hidden = true; go('meals'); } else sendUser(label); };
+    q.append(b);
+  });
+}
+let busy = false, ctl = null;
+function setBusy(on){
+  busy = on; const s = $('#send');
+  s.classList.toggle('stop', on); s.setAttribute('aria-label', on ? 'Stop' : 'Send');
+  s.innerHTML = `<svg class="ic sm"><use href="#i-${on ? 'stop' : 'send'}"/></svg>`;
+}
+async function sendUser(text){
+  text = String(text || '').trim(); if(!text || busy) return;
+  if(!S.turns.length) body.innerHTML = '';
+  showReplies(null);
+  addMsg('me', text); S.turns.push({role:'user', content:text}); save();
+  const inp = $('#chat-input'); inp.value = ''; inp.style.height = '';
+  const safe = safetyCheck(text);
+  if(safe){ finishReply(safe.lines.join('\n'), safe.replies, 'safety'); return; }
+  setBusy(true);
+  const b = addMsg('guti', '');
+  b.innerHTML = '<span class="dots" aria-label="Gutly is thinking"><i></i><i></i><i></i></span>';
+  if(AI.live){
+    ctl = new AbortController();
+    try {
+      const {text: out} = await aiChat(S.turns.slice(-12), ({text: t}) => { b.innerHTML = bubbleHTML(splitChips(t).body || '…'); scrollDown(); }, ctl.signal);
+      const {body: reply, chips} = splitChips(out);
+      b.innerHTML = bubbleHTML(reply); S.turns.push({role:'assistant', content:reply}); S.turns = S.turns.slice(-24); save();
+      showReplies(chips); setBusy(false); buzz(14); scrollDown(); return;
+    } catch(e){
+      const code = e && e.code;
+      if(code === 'cancelled'){ const kept = e.text ? splitChips(e.text).body : ''; b.closest('.msg').remove(); if(kept){ finishReply(kept + '\n(stopped)', []); } else { setBusy(false); } return; }
+      if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)){ AI.live = false; setStatus(); }
+      b.closest('.msg').remove();
+      const r = scripted(text);
+      finishReply(r.lines.filter(Boolean).join('\n'), r.replies, '', code === 'not_granted' ? "AI replies are off for this page, so Gutly is using scripted replies." : code === 'rate_limited' ? 'Gutly’s AI is busy right now. This is a scripted reply; try again in a bit.' : AI.live ? 'Couldn’t reach Gutly’s AI. This is a scripted reply.' : 'Gutly is offline here, so this is a scripted reply.');
+      return;
+    }
+  }
+  await new Promise(r => setTimeout(r, 700 + Math.random() * 500));
+  b.closest('.msg').remove();
+  const r = scripted(text);
+  finishReply(r.lines.filter(Boolean).join('\n'), r.replies);
+}
+function finishReply(text, chips, cls='', meta=''){
+  const b = addMsg('guti', text, cls);
+  if(meta) b.insertAdjacentHTML('beforeend', `<p class="meta">${esc(meta)}</p>`);
+  S.turns.push({role:'assistant', content:text}); S.turns = S.turns.slice(-24); save();
+  showReplies(chips); setBusy(false);
+}
+$('#composer').addEventListener('submit', e => { e.preventDefault(); if(busy){ ctl && ctl.abort(); return; } sendUser($('#chat-input').value); });
+$('#chat-input').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if(!busy) sendUser(e.target.value); } });
+$('#chat-input').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; });
+$('#chat-clear').addEventListener('click', () => { if(busy) return; S.turns = []; save(); renderChat(); toast('New chat started.'); });
+
+/* ================= panels: style guide + build notes (A9) ================= */
+function openPanel(id){ const p = $(id); p.hidden = false; document.body.style.overflow = 'hidden'; p.scrollTop = 0; const b = p.querySelector('button'); b && b.focus(); }
+function closePanels(){ $('#panel-guide').hidden = true; $('#panel-notes').hidden = true; document.body.style.overflow = ''; }
+document.addEventListener('click', e => { if(e.target.closest('[data-panel-close]')) closePanels(); });
+const TOKENS = [
+  ['--bg','70% · background, large surfaces'],['--surface','30% · cards, sheets, nav'],['--surface-2','30% · tints, selected states'],['--line','30% · borders, dividers'],
+  ['--ink','30% · text, selected pills, user bubbles'],['--muted','30% · secondary text'],['--accent','10% · the one thing to tap'],['--accent-deep','10% · accent as text, focus ring'],
+  ['--accent-press','10% · pressable shadow'],['--success','semantic · AI live, passes'],['--warn','semantic · offline'],['--danger','semantic · errors, safety'],['--info','semantic · info']];
+const lum = hex => { const v = hex.replace('#',''); const c = [0,2,4].map(i => parseInt(v.substr(i,2),16)/255).map(x => x <= .03928 ? x/12.92 : Math.pow((x+.055)/1.055, 2.4)); return .2126*c[0] + .7152*c[1] + .0722*c[2]; };
+const ratio = (a, b) => { const A = lum(a), B = lum(b); return (Math.max(A,B) + .05) / (Math.min(A,B) + .05); };
+const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function buildGuide(){
+  const bg = tok('--bg'), sf = tok('--surface'), s2 = tok('--surface-2');
+  const textTokens = ['--ink','--muted','--accent-deep','--success','--warn','--danger','--info'];
+  const sw = TOKENS.map(([n, role]) => {
+    const v = tok(n);
+    const checks = textTokens.includes(n) ? [['bg', bg],['surface', sf],['surface-2', s2]].map(([k, c]) => { const r = ratio(v, c); return `<span class="badge ${r >= 4.5 ? 'pass' : 'fail'}">${r.toFixed(1)}:1 on ${k}</span>`; }).join('')
+      : n === '--accent' ? (() => { const r = ratio(tok('--on-accent'), v); return `<span class="badge ${r >= 4.5 ? 'pass' : 'fail'}">button text ${r.toFixed(1)}:1</span>`; })() : '';
+    return `<div class="swatch"><div class="chip" style="background:var(${n})"></div><div class="body"><b>${n}</b> <code>${v}</code><div class="muted small">${role}</div>${checks ? `<div class="ratio">${checks}</div>` : ''}</div></div>`;
+  }).join('');
+  $('#guide-in').innerHTML = `<div class="panel-head"><button class="back rp" data-panel-close><svg class="ic sm"><use href="#i-back"/></svg>Back to prototype</button><span class="small muted">Values read live from the current theme</span></div>
+  <h1>Gutly style guide</h1><p class="lead">Apricot from Guti's body for the one action that matters, plum ink for structure, a soft lavender-grey base. Calm, a little playful, never loud. Switch your system to dark mode and reopen this page to see the dark set checked.</p>
+  <h2>70 · 30 · 10</h2><div class="split"><div style="flex:70;background:var(--bg);color:var(--ink);border:1px solid var(--line)">70% base</div><div style="flex:30;background:var(--ink);color:var(--bg)">30% plum ink + tints</div><div style="flex:10;background:var(--accent);color:var(--on-accent)">10%</div></div>
+  <p class="lead small">Rule: if more than one thing on a screen uses apricot, all but the main action lose it. Gutly's own orange body is illustration, not UI colour.</p>
+  <h2>Colour tokens and WCAG AA</h2><div class="grid">${sw}</div>
+  <h2>Type</h2><div class="type-spec"><div style="font-family:var(--font-display);font-size:var(--fs-title);font-weight:700;line-height:1.15">Baloo 2 · titles and logo</div><div class="muted small">By Ek Type, a Mumbai foundry. Rounded like Guti. 600 / 700, fluid with clamp(), line-height 1.15.</div><div style="font-size:1rem">Figtree · UI and body at 16px minimum, line-height 1.5. 400 / 600 only.</div></div>
+  <h2>Shape</h2><div class="demo-row"><div style="width:72px;height:56px;border-radius:12px;background:var(--surface-2)"></div><div style="width:72px;height:56px;border-radius:16px;background:var(--surface-2)"></div><div style="width:72px;height:56px;border-radius:24px;background:var(--surface-2)"></div><div style="width:110px;height:44px;border-radius:999px;background:var(--surface-2)"></div><span class="small muted">12 · 16 · 24 · pill, on an 8px spacing grid</span></div>
+  <h2>Buttons and press feedback</h2><div class="demo-row"><button class="btn btn-primary rp">Primary</button><button class="btn btn-secondary rp">Secondary</button><button class="btn-text rp">Text</button></div><p class="lead small">Every tap: a ripple from the touch point (2.2× the element, 18% opacity, 550ms), a 3px shadow that compresses 2px, and a vibration of 8ms on primary or 4ms on secondary where the phone supports it. Rewards add a spring pop and a 12–20ms buzz.</p>
+  <h2>Motion</h2><div class="demo-row"><button class="btn btn-secondary rp" data-demo="150ms">Fast 150ms</button><button class="btn btn-secondary rp" data-demo="220ms">Medium 220ms</button><button class="btn btn-secondary rp" data-demo="400ms">Slow 400ms</button><button class="btn btn-secondary rp" data-demo="spring">Spring (rewards)</button><div class="motion-dot" id="mdot"></div></div><p class="lead small">Only transform and opacity animate. Everything stops under reduced motion.</p>
+  <h2>Guti</h2><div class="mascots">${Object.keys(MASCOT).map(k => `<figure><img class="mascot idle" src="${MASCOT[k]}" alt=""><figcaption>${k}</figcaption></figure>`).join('')}</div><p class="lead small">Rule: Guti appears at most once on any visible screen. The only exception is the check-in, where his faces are the choices. Used in the Today greeting (mirrors your last mood), the chat header, the save confirmation and empty states on screens without him. The sheet's intensity dots are left out: the PRD rules out severity scales.</p>`;
+  $$('[data-demo]', $('#guide-in')).forEach(b => b.onclick = () => {
+    const d = $('#mdot'), v = b.dataset.demo;
+    d.style.transition = 'none'; d.style.transform = 'none'; void d.offsetWidth;
+    d.style.transition = v === 'spring' ? 'transform 500ms var(--spring)' : `transform ${v} var(--ease)`;
+    d.style.transform = 'translateX(80px) scale(1.15)';
+    if(v === 'spring') buzz(16);
+  });
+}
+const AUDIT = [
+  ['Onboarding','works','works','Dots, not a progress bar; no Back after Q1; Skip only'],
+  ['Create account','works','works','No validation feedback; no way to try without an account'],
+  ['Today','works','works','Placeholder vector mascot; no meal-idea preview; state lost on reload'],
+  ['Log meal','broken','broken','Shutter faked a photo, camera never opened; no way to log without a photo (the claim check shows that matters)'],
+  ['Check-in','works','works','Plain word pills; no success feedback'],
+  ['Insights','confusing','confusing','Confidence band unexplained; no loading state'],
+  ['Meal ideas','works','works','No "saved" view; empty state was text only'],
+  ['Gutly chat','works','works','Scripted only; never showed whether replies were AI or offline; no error state; no self-harm handling'],
+  ['Profile','confusing','confusing','"See what’s in Plus" was a dead end (toast only); Sign out cleared data without asking; no log history'],
+  ['Side rail','works','long scroll','Not collapsible; stacked below the phone at 390px'],
+  ['Global','—','—','No haptics or ripple; one transition speed; no dark mode'],
+  ['Deck vs product','—','—','Deck claims "90% less effort" with photos and "30 seconds to log"; positioning map puts Gutly on the prescriptive side']];
+const BEFORE_AFTER = [
+  ['Palette','DLS v1.2: sage-grey + muted coral, 60-30-10','New 70-30-10: lavender-grey base, plum ink, apricot from Guti; dark set; live AA checks'],
+  ['Onboarding','Dots, forward only, one answer each','Welcome screen with Create account and Log in; sign-up form; four questions with multi-select, Continue, Back and Skip; progress bar across 5 steps'],
+  ['Sign up / Log in','One form at the end, no checks, no way back in','Sign-up first with inline checks and show/hide password; Log in checks the saved email and password; Forgot password; guest mode; Log out keeps data for the next log-in'],
+  ['Today','One insight, buttons','Guti mirrors your last check-in; personal greeting; today list with thumbnails; peeking meal-idea carousel'],
+  ['Log meal','Fake capture','Live viewfinder where the browser allows it, otherwise the phone camera app; Gallery; "Just a note"; Gutly names the dish from the photo'],
+  ['Check-in','Word pills','Six Guti faces (up to two) plus gut pills; spring pop on choice'],
+  ['Insights','Static cards','Loading skeleton, evidence count-up, filling bands, tooltip, dismiss + undo, restore when empty'],
+  ['Meal ideas','Filters','"Saved" filter, empty states per filter, persisted bookmarks'],
+  ['Gutly chat','Scripted','Live AI on Claude with "AI / Offline" status, 12-turn context, local safety screen first, Stop button, error fallback'],
+  ['Profile','Behind the avatar only; toast-only Plus','Fifth tab in the bottom bar; Appearance switch (System, Light, Dark); log history; Plus sheet with waitlist; Sign out asks first'],
+  ['Theme','Followed the system only','Switch in Profile and a sun/moon button on Today; choice saved on this device']
+  ['Everywhere','Scale-on-press','Ripple, pressable shadows, haptics, staggered lists, page rise, reduced-motion off-switch, saved on this device']];
+const TESTS = ['Welcome: Create account, Log in and Explore all work','Sign up: empty or bad fields show inline hints; success goes to the questions','Questions: pick several, deselect one, Continue enables only with a pick','Log out, then log in with the same details; wrong password shows an error','Theme: Light, Dark and System in Profile; sun/moon on Today flips it; survives reload','Bottom bar: all five tabs, including Profile','Log meal: on a phone, the camera opens as soon as you tap Log meal','Onboarding: answer, Back, Skip, reach Today','Account: bad email shows the hint; "Try it without an account" works','Today: greeting, insight tooltip opens and closes, carousel scrolls','Log meal: shutter opens a camera (phone) or file picker (desktop)','Log meal: Gallery, Just a note, Retake, Save returns to Today','Log meal: dish name appears when AI is allowed; editable','Check-in: max two faces, Save updates Guti on Today','Insights: skeleton, count-up, Why this, dismiss, Undo, restore','Meal ideas: each filter, Saved filter empty state, bookmark persists after reload','Gutly: status shows AI or Offline; reply streams; Stop works','Gutly: "Do I have IBS?", "I saw blood" and a self-harm phrase each get the safety reply','Profile: log list, Plus waitlist, Sign out confirm','Reload: state, theme and chat survive','Dark mode: every screen readable','Keyboard: Tab reaches every control; Escape closes sheets and panels','Reduced motion: no animation','Console: zero errors'];
+function buildNotes(){
+  const rowA = AUDIT.map(([p, d, m, n]) => `<tr><td><b>${p}</b></td><td class="st ${d === 'works' ? 'ok' : d === 'broken' ? 'bad' : d === '—' ? '' : 'warn'}">${d}</td><td class="st ${m === 'works' ? 'ok' : m === 'broken' ? 'bad' : m === '—' ? '' : 'warn'}">${m}</td><td>${esc(n)}</td></tr>`).join('');
+  const rowB = BEFORE_AFTER.map(([p, b, a]) => `<tr><td><b>${p}</b></td><td>${esc(b)}</td><td>${esc(a)}</td></tr>`).join('');
+  const tl = w => TESTS.map((t, i) => { const k = w + i; return `<li><label><input type="checkbox" data-test="${k}" ${S.tests[k] ? 'checked' : ''}><span>${esc(t)}</span></label></li>`; }).join('');
+  $('#notes-in').innerHTML = `<div class="panel-head"><button class="back rp" data-panel-close><svg class="ic sm"><use href="#i-back"/></svg>Back to prototype</button></div>
+  <h1>Audit and build notes</h1><p class="lead">The audit covers prototype v3 as it was before this rebuild, reviewed from its code at 1440px and 390px layouts. Ticks in the test list are saved on this device.</p>
+  <h2>A1 · Audit of v3</h2><div class="tbl"><table><thead><tr><th>Page or flow</th><th>1440px</th><th>390px</th><th>What was wrong</th></tr></thead><tbody>${rowA}</tbody></table></div>
+  <h2>Before and after</h2><div class="tbl"><table><thead><tr><th>Page</th><th>Before (v3)</th><th>After (v4)</th></tr></thead><tbody>${rowB}</tbody></table></div>
+  <h2>Where the playbook overrode the old specs</h2><div class="tbl"><table><thead><tr><th>Topic</th><th>Old spec (DLS v1.2, IA v1.1)</th><th>Now (playbook)</th></tr></thead><tbody>
+  <tr><td><b>Colour rule</b></td><td>60-30-10, sage and coral, locked</td><td>70-30-10, new palette built around Guti</td></tr>
+  <tr><td><b>Onboarding</b></td><td>Progress dots, no backtracking</td><td>Progress bar, Back where predictable</td></tr>
+  <tr><td><b>Motion</b></td><td>No bounce</td><td>Spring easing on rewards only</td></tr>
+  <tr><td><b>Kept from PRD</b></td><td>No scores or severity</td><td>Mascot intensity dots left out of check-in</td></tr></tbody></table></div>
+  <h2>Test list · 1440px</h2><ul class="checklist">${tl('d')}</ul>
+  <h2>Test list · 390px</h2><ul class="checklist">${tl('m')}</ul>`;
+  $$('[data-test]', $('#notes-in')).forEach(c => c.onchange = () => { S.tests[c.dataset.test] = c.checked; save(); });
+}
+$('#open-guide').addEventListener('click', () => { buildGuide(); openPanel('#panel-guide'); });
+$('#open-notes').addEventListener('click', () => { buildNotes(); openPanel('#panel-notes'); });
+
+/* ================= theme ================= */
+const root = document.documentElement;
+let hostTheme = root.getAttribute('data-theme'), applying = false;
+const isDark = () => { const a = root.getAttribute('data-theme'); return a ? a === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+function syncThemeUI(){
+  $$('#theme-seg [data-theme-opt]').forEach(b => b.setAttribute('aria-checked', b.dataset.themeOpt === S.theme));
+  const q = $('#theme-quick'), d = isDark(), lbl = d ? 'Switch to light mode' : 'Switch to dark mode';
+  q.innerHTML = `<svg class="ic sm"><use href="#i-${d ? 'sun' : 'moon'}"/></svg>`; q.setAttribute('aria-label', lbl); q.title = lbl;
+}
+function applyTheme(){
+  applying = true;
+  if(S.theme === 'light' || S.theme === 'dark') root.setAttribute('data-theme', S.theme);
+  else if(hostTheme) root.setAttribute('data-theme', hostTheme); else root.removeAttribute('data-theme');
+  applying = false; syncThemeUI();
+}
+new MutationObserver(() => {
+  if(applying) return;
+  if(S.theme === 'system'){ hostTheme = root.getAttribute('data-theme'); syncThemeUI(); }
+  else if(root.getAttribute('data-theme') !== S.theme){ hostTheme = root.getAttribute('data-theme'); applyTheme(); }
+}).observe(root, {attributes:true, attributeFilter:['data-theme']});
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeUI); } catch(_){}
+function setTheme(t){ S.theme = t; save(); applyTheme(); buzz(8); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
+$('#theme-seg').addEventListener('click', e => { const b = e.target.closest('[data-theme-opt]'); if(b) setTheme(b.dataset.themeOpt); });
+$('#theme-quick').addEventListener('click', () => setTheme(isDark() ? 'light' : 'dark'));
+
+/* ================= boot ================= */
+applyTheme();
+setRail(S.rail);
+const tick = () => { $('#clock').textContent = new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:false}); };
+tick(); setInterval(tick, 30000);
+const startHash = location.hash.slice(1);
+go(SCREENS[startHash] && (S.loggedIn || AUTH.includes(startHash)) ? startHash : homeFor());
+})();
+</script>

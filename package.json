@@ -1,0 +1,11 @@
+{
+  "name": "gutly",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gutly: a calm, non-diagnostic gut-health companion. Web app, mobile prototype and serverless AI endpoints.",
+  "scripts": {
+    "bundle": "node scripts/bundle.mjs",
+    "dev": "vercel dev"
+  },
+  "engines": { "node": ">=18" }
+}
