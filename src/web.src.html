@@ -208,7 +208,17 @@ textarea.input{min-height:84px;resize:vertical}
 .back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 12px 0 4px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-sm)}
 
 /* ---------- today ---------- */
-.hello{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px}
+.hello{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:16px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:14px}
+.day{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border-radius:12px;background:var(--bg);min-width:0}
+.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.day .dn{font-size:var(--fs-xs);font-weight:600;color:var(--muted)}
+.day .meals{display:flex;gap:4px;min-height:8px}
+.day .meals i{width:8px;height:8px;border-radius:50%;background:var(--ink);opacity:.75}
+.day .feel{font-size:var(--fs-xs);font-weight:600;padding:2px 8px;border-radius:var(--r-pill);background:var(--surface-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day .feel.rough{background:var(--accent-tint)}
+.day .feel.none{background:transparent;color:var(--muted)}
+@media (max-width:600px){ .week{grid-template-columns:repeat(4,minmax(0,1fr))} }
 .hello .grow{min-width:0}
 .grid-2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;align-items:start}
 .timeline{display:flex;flex-direction:column}
@@ -453,12 +463,19 @@ textarea.input{min-height:84px;resize:vertical}
         <img class="mascot idle" id="today-mascot" width="112" alt="">
       </div>
       <div class="grid-2">
+        <div class="stack" style="gap:20px">
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h2 class="h2">Today so far</h2><span class="small muted" id="today-count"></span></div>
           <div id="today-list" style="margin-top:12px"></div>
           <div class="actions">
             <button class="btn btn-primary rp" data-open="log"><svg class="ic sm"><use href="#i-camera"/></svg>Log meal <kbd>L</kbd></button>
             <button class="btn btn-secondary rp" data-open="checkin" id="checkin-btn">Check in <kbd>K</kbd></button>
+          </div>
+        </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h2 class="h2">Your week</h2><span class="small muted" id="week-sum"></span></div>
+            <div class="week stagger" id="week" role="list" aria-label="Meals and check-ins over the last 7 days"></div>
+            <p class="small muted" style="margin:12px 0 0">Dots are meals; the word is how your gut felt at check-in. Two heavier afternoons followed rajma lunches on rushed days.</p>
           </div>
         </div>
         <div class="stack" style="gap:20px">
@@ -615,9 +632,10 @@ const VIEWS = ['today','insights','meals','guti','profile'];
 
 /* ===== state ===== */
 const KEY = 'gutly-web-v1';
-const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, side:'open', theme:'system'});
+const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, side:'open', theme:'light'});
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(_){}
+if(!S.themeChosen) S.theme = 'light';
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(_){} };
 const slot = () => { const h = new Date().getHours(); return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : 'dinner'; };
 const todays = () => S.logs.filter(x => dayKey(x.time) === dayKey(Date.now()));
@@ -852,6 +870,14 @@ function renderToday(){
   if(ins) $('#today-why').onclick = () => go('insights', {expand: ins.id});
   $('#checkin-btn').firstChild.textContent = S.skips >= 2 ? 'Check in, if you like ' : 'Check in ';
   const ideas = [...MEALS.filter(m => m.when.includes(slot())), ...MEALS.filter(m => !m.when.includes(slot()))].slice(0, 3);
+  const FEEL = ['settled','bloated','calm','bloated','settled','calm','light'];
+  const MEALS_N = [3,2,3,3,2,3,2];
+  const days = [...Array(7)].map((_, i) => { const dt = new Date(); dt.setDate(dt.getDate() - (6 - i)); return dt; });
+  const tm = t.filter(x => x.type === 'meal').length, tc = t.filter(x => x.type === 'check');
+  const tg = tc.length ? (tc[tc.length - 1].tags || []) : []; const lastFeel = String(tg.find(x => /settled|light|bloat|heavy|gas|cramp|uneasy|fine/i.test(x)) || tg[0] || '').toLowerCase();
+  $('#week').innerHTML = days.map((dt, i) => { const today = i === 6, nm = today ? tm : MEALS_N[(dt.getDay() + 6) % 7], f = today ? lastFeel : FEEL[(dt.getDay() + 6) % 7];
+    return `<div class="day${today ? ' today' : ''}" role="listitem" style="--i:${i}" aria-label="${dt.toLocaleDateString('en-IN',{weekday:'long'})}: ${nm} meals${f ? ', felt ' + f : ''}"><span class="dn">${today ? 'Today' : dt.toLocaleDateString('en-IN',{weekday:'short'})}</span><span class="meals">${'<i></i>'.repeat(Math.min(nm, 4))}</span><span class="feel${!f ? ' none' : /bloat|heavy|gas|cramp|uncomf/.test(f) ? ' rough' : ''}">${f ? esc(f) : '—'}</span></div>`; }).join('');
+  $('#week-sum').textContent = `${SEED.meals + tm} meals · ${SEED.checkins + tc.length} check-ins`;
   $('#today-ideas').innerHTML = ideas.map((m, i) => `<button class="idea-row rp" data-view="meals" style="--i:${i}"><span class="dot"></span><span class="grow"><span class="t">${esc(m.name)}</span><span class="d">${esc(m.why)}</span></span></button>`).join('');
 }
 
@@ -1065,7 +1091,7 @@ function syncThemeUI(){
 function applyTheme(){ applying = true; if(S.theme === 'light' || S.theme === 'dark') root.setAttribute('data-theme', S.theme); else if(hostTheme) root.setAttribute('data-theme', hostTheme); else root.removeAttribute('data-theme'); applying = false; syncThemeUI(); }
 new MutationObserver(() => { if(applying) return; if(S.theme === 'system'){ hostTheme = root.getAttribute('data-theme'); syncThemeUI(); } else if(root.getAttribute('data-theme') !== S.theme){ hostTheme = root.getAttribute('data-theme'); applyTheme(); } }).observe(root, {attributes:true, attributeFilter:['data-theme']});
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeUI); } catch(_){}
-function setTheme(t){ S.theme = t; save(); applyTheme(); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
+function setTheme(t){ S.theme = t; S.themeChosen = true; save(); applyTheme(); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
 $('#theme-seg').addEventListener('click', e => { const b = e.target.closest('[data-theme-opt]'); if(b) setTheme(b.dataset.themeOpt); });
 $('#theme-quick').addEventListener('click', () => setTheme(isDark() ? 'light' : 'dark'));
 

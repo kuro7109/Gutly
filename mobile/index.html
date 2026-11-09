@@ -779,9 +779,10 @@ const SCREENS = {
 
 /* ================= state + storage ================= */
 const KEY = 'gutly-proto-v4';
-const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, rail:'open', tests:{}, theme:'system'});
+const fresh = () => ({loggedIn:false, guest:false, account:null, onboarded:false, name:'Arjun', fullName:'', email:'', answers:{}, extra:{}, logs:[], skips:0, saved:['khichdi'], dismissed:[], filter:'all', turns:[], mood:'calm', waitlist:false, rail:'open', tests:{}, theme:'light'});
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if(raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(_){}
+if(!S.themeChosen) S.theme = 'light';
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(_){} };
 
 /* ================= navigation ================= */
@@ -1507,7 +1508,7 @@ new MutationObserver(() => {
   else if(root.getAttribute('data-theme') !== S.theme){ hostTheme = root.getAttribute('data-theme'); applyTheme(); }
 }).observe(root, {attributes:true, attributeFilter:['data-theme']});
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeUI); } catch(_){}
-function setTheme(t){ S.theme = t; save(); applyTheme(); buzz(8); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
+function setTheme(t){ S.theme = t; S.themeChosen = true; save(); applyTheme(); buzz(8); toast(t === 'system' ? 'Following your system setting.' : `${t === 'dark' ? 'Dark' : 'Light'} mode on.`); }
 $('#theme-seg').addEventListener('click', e => { const b = e.target.closest('[data-theme-opt]'); if(b) setTheme(b.dataset.themeOpt); });
 $('#theme-quick').addEventListener('click', () => setTheme(isDark() ? 'light' : 'dark'));
 
